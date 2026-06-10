@@ -13,6 +13,7 @@ export class QueueModule {
     if (!redisUrl) {
       return {
         module: QueueModule,
+        global: true,
         providers: [{ provide: getQueueToken(DOMAIN_EVENTS_QUEUE), useValue: undefined }],
         exports: [getQueueToken(DOMAIN_EVENTS_QUEUE)],
       };
@@ -20,6 +21,7 @@ export class QueueModule {
 
     return {
       module: QueueModule,
+      global: true,
       imports: [
         forwardRef(() => NotificationsModule),
         BullModule.forRootAsync({
@@ -31,7 +33,7 @@ export class QueueModule {
         BullModule.registerQueue({ name: DOMAIN_EVENTS_QUEUE }),
       ],
       providers: [DomainEventProcessor],
-      exports: [BullModule, getQueueToken(DOMAIN_EVENTS_QUEUE)],
+      exports: [BullModule],
     };
   }
 }
