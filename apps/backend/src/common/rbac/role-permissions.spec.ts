@@ -45,12 +45,11 @@ describe('Role Permissions', () => {
     expect(employeePermissions).not.toContain(Permission.APPROVALS_APPROVE);
   });
 
-  it('should grant approval permissions to manager but not employee', () => {
-    const managerPermissions = getPermissionsForRole(UserRole.MANAGER);
-    const employeePermissions = getPermissionsForRole(UserRole.EMPLOYEE);
-
-    expect(managerPermissions).toContain(Permission.APPROVALS_APPROVE);
-    expect(employeePermissions).not.toContain(Permission.APPROVALS_APPROVE);
+  it('should grant finance process to tenant admin only', () => {
+    expect(roleHasPermission(UserRole.TENANT_ADMIN, Permission.FINANCE_PROCESS)).toBe(true);
+    expect(roleHasPermission(UserRole.MANAGER, Permission.FINANCE_PROCESS)).toBe(false);
+    expect(roleHasPermission(UserRole.EMPLOYEE, Permission.FINANCE_READ)).toBe(true);
+    expect(roleHasPermission(UserRole.EMPLOYEE, Permission.FINANCE_EXPORT)).toBe(false);
   });
 
   it('should evaluate permission checks correctly', () => {

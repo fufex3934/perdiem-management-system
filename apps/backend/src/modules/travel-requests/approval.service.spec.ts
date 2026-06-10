@@ -2,6 +2,7 @@ import { Types } from 'mongoose';
 import { ApprovalStepStatus } from '@/common/enums/approval-step-status.enum';
 import { TravelRequestStatus } from '@/common/enums/travel-request-status.enum';
 import { UserRole } from '@/common/enums/user-role.enum';
+import { PaymentService } from '../finance/payment.service';
 import { ApprovalAuditRepository } from './approval-audit.repository';
 import { ApprovalWorkflowService } from './approval-workflow.service';
 import { ApprovalService } from './approval.service';
@@ -12,6 +13,7 @@ describe('ApprovalService', () => {
   let service: ApprovalService;
   let repository: jest.Mocked<TravelRequestRepository>;
   let auditRepository: jest.Mocked<ApprovalAuditRepository>;
+  let paymentService: jest.Mocked<PaymentService>;
 
   const tenantId = '507f1f77bcf86cd799439011';
   const employeeId = '507f1f77bcf86cd799439012';
@@ -86,10 +88,15 @@ describe('ApprovalService', () => {
       findByTravelRequestInTenant: jest.fn().mockResolvedValue([]),
     } as unknown as jest.Mocked<ApprovalAuditRepository>;
 
+    paymentService = {
+      createFromApprovedTravelRequest: jest.fn().mockResolvedValue(null),
+    } as unknown as jest.Mocked<PaymentService>;
+
     service = new ApprovalService(
       repository,
       auditRepository,
       new ApprovalWorkflowService(),
+      paymentService,
     );
   });
 

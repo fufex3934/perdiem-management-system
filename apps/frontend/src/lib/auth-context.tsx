@@ -17,11 +17,15 @@ import {
 } from './auth-storage';
 import {
   canCalculatePerDiem,
+  canExportFinance,
   canManageApprovals,
   canManagePolicies,
   canManageTravelRequests,
   canManageUsers,
+  canProcessFinance,
+  canReadAllFinance,
   canReadAllTravelRequests,
+  canViewFinance,
   hasPermission,
   isTenantAdmin,
   Permission,
@@ -41,6 +45,10 @@ interface AuthContextValue {
   canManageTravelRequests: boolean;
   canReadAllTravelRequests: boolean;
   canManageApprovals: boolean;
+  canViewFinance: boolean;
+  canReadAllFinance: boolean;
+  canProcessFinance: boolean;
+  canExportFinance: boolean;
   hasPermission: (permission: Permission) => boolean;
   login: (input: LoginInput) => Promise<void>;
   registerTenant: (input: RegisterTenantInput) => Promise<void>;
@@ -111,6 +119,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       canManageTravelRequests: canManageTravelRequests(role),
       canReadAllTravelRequests: canReadAllTravelRequests(role),
       canManageApprovals: canManageApprovals(role),
+      canViewFinance: canViewFinance(role),
+      canReadAllFinance: canReadAllFinance(role),
+      canProcessFinance: canProcessFinance(role),
+      canExportFinance: canExportFinance(role),
       hasPermission: (permission: Permission) => hasPermission(role, permission),
       login,
       registerTenant,

@@ -1,5 +1,6 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { HttpStatus, Inject, Injectable, forwardRef } from '@nestjs/common';
 import { Types } from 'mongoose';
+import { PaymentService } from '../finance/payment.service';
 import { ErrorCodes } from '@/common/constants/error-codes';
 import { ApprovalAuditAction } from '@/common/enums/approval-audit-action.enum';
 import { ApprovalStepStatus } from '@/common/enums/approval-step-status.enum';
@@ -29,6 +30,8 @@ export class ApprovalService {
     private readonly travelRequestRepository: TravelRequestRepository,
     private readonly approvalAuditRepository: ApprovalAuditRepository,
     private readonly approvalWorkflowService: ApprovalWorkflowService,
+    @Inject(forwardRef(() => PaymentService))
+    private readonly paymentService: PaymentService,
   ) {}
 
   async processSubmit(
@@ -63,6 +66,8 @@ export class ApprovalService {
         previousStatus: TravelRequestStatus.DRAFT,
         newStatus: TravelRequestStatus.APPROVED,
       });
+
+      await this.paymentService.createFromApprovedTravelRequest(actor.tenantId, updated!);
 
       return this.toResponse(updated!);
     }
@@ -173,6 +178,10 @@ export class ApprovalService {
         ? TravelRequestStatus.APPROVED
         : TravelRequestStatus.PENDING_APPROVAL,
     });
+
+    if (isComplete) {
+      await this.paymentService.createFromApprovedTravelRequest(actor.tenantId, updated!);
+    }
 
     return this.toResponse(updated!);
   }

@@ -17,6 +17,8 @@ export default function DashboardPage() {
     canCalculatePerDiem,
     canManageTravelRequests,
     canManageApprovals,
+    canViewFinance,
+    canProcessFinance,
     logout,
   } = useAuth();
 
@@ -54,7 +56,7 @@ export default function DashboardPage() {
       <div className="mx-auto max-w-5xl px-6 py-10">
         <div className="rounded-2xl border bg-white p-8 shadow-sm">
           <p className="text-sm font-medium uppercase tracking-wide text-blue-600">
-            Phase 5 — Approval Workflow
+            Phase 6 — Finance
           </p>
           <h2 className="mt-2 text-2xl font-bold text-slate-900">
             Welcome, {user.firstName} {user.lastName}
@@ -92,6 +94,14 @@ export default function DashboardPage() {
                 className="inline-flex rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-800 hover:bg-amber-100"
               >
                 Pending approvals
+              </Link>
+            )}
+            {canViewFinance && (
+              <Link
+                href="/finance"
+                className="inline-flex rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-800 hover:bg-emerald-100"
+              >
+                {canProcessFinance ? 'Finance & payments' : 'My payments'}
               </Link>
             )}
           </div>

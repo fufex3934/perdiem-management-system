@@ -91,6 +91,25 @@ pnpm --filter @perdiem/backend test:e2e
 - [x] Next.js frontend with API client
 - [x] Unit & integration tests
 
+## Phase 6 — Finance (Complete)
+
+- [x] Per diem payment records auto-created on travel request approval
+- [x] Payment lifecycle: pending → paid / failed
+- [x] Finance RBAC (employees see own, managers/admins see all, admin processes)
+- [x] CSV export for finance reporting
+- [x] Frontend finance page with mark-paid and export
+- [x] Unit and E2E tests
+
+### Finance API
+
+| Method | Endpoint | Permission | Description |
+|--------|----------|------------|-------------|
+| GET | `/api/v1/finance/payments` | `finance:read` | List payments (scoped by role) |
+| GET | `/api/v1/finance/payments/export` | `finance:export` | Export payments as CSV |
+| GET | `/api/v1/finance/payments/:id` | `finance:read` | Get payment by ID |
+| POST | `/api/v1/finance/payments/:id/mark-paid` | `finance:process` | Mark pending payment as paid |
+| POST | `/api/v1/finance/payments/:id/mark-failed` | `finance:process` | Mark pending payment as failed |
+
 ## Phase 5 — Approval Workflow (Complete)
 
 - [x] Multi-step approval chain (employee: manager → admin; manager: admin only)
@@ -202,7 +221,7 @@ pnpm --filter @perdiem/backend test:e2e
 | 3 | Policy Engine | ✅ Complete |
 | 4 | Travel Request | ✅ Complete |
 | 5 | Approval Workflow | ✅ Complete |
-| 6 | Finance | Pending |
+| 6 | Finance | ✅ Complete |
 | 7 | Notifications | Pending |
 | 8 | Analytics | Pending |
 | 9 | Security Hardening | Pending |

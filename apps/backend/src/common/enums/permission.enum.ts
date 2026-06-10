@@ -16,4 +16,8 @@ export enum Permission {
   APPROVALS_READ = 'approvals:read',
   APPROVALS_APPROVE = 'approvals:approve',
   APPROVALS_REJECT = 'approvals:reject',
+  FINANCE_READ = 'finance:read',
+  FINANCE_READ_ALL = 'finance:read_all',
+  FINANCE_PROCESS = 'finance:process',
+  FINANCE_EXPORT = 'finance:export',
 }

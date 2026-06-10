@@ -16,6 +16,10 @@ export const Permission = {
   APPROVALS_READ: 'approvals:read',
   APPROVALS_APPROVE: 'approvals:approve',
   APPROVALS_REJECT: 'approvals:reject',
+  FINANCE_READ: 'finance:read',
+  FINANCE_READ_ALL: 'finance:read_all',
+  FINANCE_PROCESS: 'finance:process',
+  FINANCE_EXPORT: 'finance:export',
 } as const;
 
 export type Permission = (typeof Permission)[keyof typeof Permission];
@@ -45,6 +49,9 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     Permission.APPROVALS_READ,
     Permission.APPROVALS_APPROVE,
     Permission.APPROVALS_REJECT,
+    Permission.FINANCE_READ,
+    Permission.FINANCE_READ_ALL,
+    Permission.FINANCE_EXPORT,
   ],
   [UserRole.EMPLOYEE]: [
     Permission.POLICIES_READ,
@@ -53,6 +60,7 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     Permission.TRAVEL_REQUESTS_WRITE,
     Permission.TRAVEL_REQUESTS_SUBMIT,
     Permission.TRAVEL_REQUESTS_CANCEL,
+    Permission.FINANCE_READ,
   ],
 };
 
@@ -90,4 +98,20 @@ export function canReadAllTravelRequests(role: string): boolean {
 
 export function canManageApprovals(role: string): boolean {
   return hasPermission(role, Permission.APPROVALS_APPROVE);
+}
+
+export function canViewFinance(role: string): boolean {
+  return hasPermission(role, Permission.FINANCE_READ);
+}
+
+export function canReadAllFinance(role: string): boolean {
+  return hasPermission(role, Permission.FINANCE_READ_ALL);
+}
+
+export function canProcessFinance(role: string): boolean {
+  return hasPermission(role, Permission.FINANCE_PROCESS);
+}
+
+export function canExportFinance(role: string): boolean {
+  return hasPermission(role, Permission.FINANCE_EXPORT);
 }

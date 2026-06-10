@@ -24,7 +24,7 @@ export default async function HomePage() {
       <div className="mx-auto flex min-h-screen max-w-5xl flex-col items-center justify-center px-6 py-16">
         <div className="w-full max-w-2xl rounded-2xl border bg-white p-10 shadow-sm">
           <div className="mb-6 inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700">
-            Phase 5 — Approval Workflow
+            Phase 6 — Finance
           </div>
 
           <h1 className="text-4xl font-bold tracking-tight text-slate-900">
@@ -98,17 +98,23 @@ export default async function HomePage() {
             >
               Approvals
             </Link>
+            <Link
+              href="/finance"
+              className="rounded-lg border border-slate-200 px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              Finance
+            </Link>
           </div>
 
           <div className="mt-8 rounded-lg border border-dashed border-slate-200 bg-slate-50 p-6">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-              Phase 5 Complete
+              Phase 6 Complete
             </h2>
             <ul className="mt-3 space-y-2 text-sm text-slate-600">
-              <li>✓ Multi-step approval workflow (manager → tenant admin)</li>
-              <li>✓ Approve/reject with comments and role-based authorization</li>
-              <li>✓ Full audit trail for submit, approve, reject, cancel</li>
-              <li>✓ Pending approvals page for managers and admins</li>
+              <li>✓ Auto-create payments when travel requests are approved</li>
+              <li>✓ Mark payments as paid or failed with references</li>
+              <li>✓ CSV export for finance reporting</li>
+              <li>✓ Finance page with role-scoped payment access</li>
             </ul>
           </div>
         </div>
