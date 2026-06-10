@@ -16,6 +16,8 @@ import { validate } from './infrastructure/config/env.validation';
 import { DatabaseModule } from './infrastructure/database/database.module';
 import { LoggerModule } from './infrastructure/logging/logger.module';
 import { RateLimitService } from './common/rate-limit/rate-limit.service';
+import { MetricsInterceptor } from './modules/metrics/metrics.interceptor';
+import { MetricsModule } from './modules/metrics/metrics.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { SecurityModule } from './modules/security/security.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -46,6 +48,7 @@ import { UserModule } from './modules/users/user.module';
     NotificationsModule,
     AnalyticsModule,
     SecurityModule,
+    MetricsModule,
     HealthModule,
   ],
   providers: [
@@ -61,6 +64,10 @@ import { UserModule } from './modules/users/user.module';
     {
       provide: APP_INTERCEPTOR,
       useClass: LoggingInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: MetricsInterceptor,
     },
     {
       provide: APP_INTERCEPTOR,

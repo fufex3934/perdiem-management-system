@@ -91,6 +91,52 @@ pnpm --filter @perdiem/backend test:e2e
 - [x] Next.js frontend with API client
 - [x] Unit & integration tests
 
+## Phase 10 — Production (Complete)
+
+- [x] Multi-stage Docker images for API and frontend
+- [x] `docker-compose.yml` with MongoDB, API, and web services
+- [x] Health checks on all containers
+- [x] GitHub Actions CI pipeline (build + unit + E2E tests)
+- [x] Operational metrics endpoint for monitoring
+- [x] Production logging (JSON) and trust proxy support
+- [x] E2E tests can use external MongoDB (CI-friendly)
+
+### Docker
+
+```bash
+# Start full stack (MongoDB + API + Web)
+pnpm docker:up
+
+# View logs
+pnpm docker:logs
+
+# Stop stack
+pnpm docker:down
+```
+
+- API: http://localhost:3001/api/v1
+- Frontend: http://localhost:3002
+
+Set strong `JWT_ACCESS_SECRET` and `JWT_REFRESH_SECRET` in `.env` before running in production.
+
+### CI/CD
+
+GitHub Actions workflow (`.github/workflows/ci.yml`) runs on push/PR to `main`:
+
+1. Install dependencies
+2. Build backend and frontend
+3. Run backend unit tests (`--runInBand`)
+4. Run E2E tests against a MongoDB service container
+
+### Monitoring
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/metrics` | Uptime, request/error counts, memory usage |
+| GET | `/api/v1/health` | Full health check (MongoDB + memory) |
+| GET | `/api/v1/health/live` | Liveness probe |
+| GET | `/api/v1/health/ready` | Readiness probe (MongoDB) |
+
 ## Phase 9 — Security Hardening (Complete)
 
 - [x] Centralized security audit logs for auth, user management, and finance actions
@@ -285,7 +331,7 @@ pnpm --filter @perdiem/backend test:e2e
 | 7 | Notifications | ✅ Complete |
 | 8 | Analytics | ✅ Complete |
 | 9 | Security Hardening | ✅ Complete |
-| 10 | Production | Pending |
+| 10 | Production | ✅ Complete |
 
 ## API Endpoints (Phase 0)
 

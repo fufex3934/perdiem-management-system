@@ -3,6 +3,7 @@ import { Environment } from './env.validation';
 export interface AppConfig {
   nodeEnv: Environment;
   name: string;
+  version: string;
   port: number;
   url: string;
   corsOrigins: string[];
@@ -41,6 +42,7 @@ export default (): AllConfig => ({
   app: {
     nodeEnv: (process.env.NODE_ENV as Environment) ?? Environment.Development,
     name: process.env.APP_NAME ?? 'perdiem-management-system',
+    version: process.env.APP_VERSION ?? '1.0.0',
     port: parseInt(process.env.APP_PORT ?? '3001', 10),
     url: process.env.APP_URL ?? 'http://localhost:3001',
     corsOrigins: (process.env.CORS_ORIGINS ?? 'http://localhost:3002')

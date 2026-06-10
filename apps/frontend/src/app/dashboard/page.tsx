@@ -58,7 +58,7 @@ export default function DashboardPage() {
       <div className="mx-auto max-w-5xl px-6 py-10">
         <div className="rounded-2xl border bg-white p-8 shadow-sm">
           <p className="text-sm font-medium uppercase tracking-wide text-blue-600">
-            Phase 9 — Security Hardening
+            Phase 10 — Production
           </p>
           <h2 className="mt-2 text-2xl font-bold text-slate-900">
             Welcome, {user.firstName} {user.lastName}

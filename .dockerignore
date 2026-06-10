@@ -1,0 +1,16 @@
+node_modules
+**/node_modules
+**/dist
+**/.next
+.git
+.github
+.env
+.env.*
+!.env.example
+coverage
+**/*.spec.ts
+**/test
+**/.turbo
+*.md
+.cursor
+agent-transcripts

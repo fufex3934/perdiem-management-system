@@ -14,7 +14,10 @@
     "test:api": "pnpm --filter @perdiem/backend test",
     "lint": "pnpm -r run lint",
     "start:api": "pnpm --filter @perdiem/backend start:prod",
-    "start:web": "pnpm --filter @perdiem/frontend start"
+    "start:web": "pnpm --filter @perdiem/frontend start",
+    "docker:up": "docker compose up --build -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f"
   },
   "devDependencies": {
     "typescript": "^5.8.3"

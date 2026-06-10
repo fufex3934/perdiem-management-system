@@ -15,6 +15,10 @@ async function bootstrap(): Promise<void> {
   const configService = app.get(ConfigService<AllConfig, true>);
   const appConfig = configService.get('app', { infer: true });
 
+  if (appConfig.nodeEnv === 'production') {
+    app.set('trust proxy', 1);
+  }
+
   app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER));
 
   app.use(helmet());
