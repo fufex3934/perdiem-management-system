@@ -5,6 +5,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { ErrorCodes } from '@/common/constants/error-codes';
 import { BusinessException } from '@/common/exceptions/business.exception';
+import { getPermissionsForRole } from '@/common/rbac/role-permissions';
 import { JwtPayload } from '@/common/interfaces/jwt-payload.interface';
 import { AllConfig } from '@/infrastructure/config/configuration';
 import { TenantService } from '../tenant/tenant.service';
@@ -127,6 +128,13 @@ export class AuthService {
     return this.mapUserToDto(user);
   }
 
+  async buildAuthResponseForUser(
+    user: UserDocument,
+    tenantId: string,
+  ): Promise<AuthResponseDto> {
+    return this.buildAuthResponse(user, tenantId, '');
+  }
+
   private async buildAuthResponse(
     user: UserDocument,
     tenantId: string,
@@ -195,6 +203,7 @@ export class AuthService {
       firstName: user.firstName,
       lastName: user.lastName,
       role: user.role,
+      permissions: getPermissionsForRole(user.role),
     };
   }
 

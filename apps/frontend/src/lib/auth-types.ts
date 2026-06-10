@@ -5,6 +5,7 @@ export interface AuthUser {
   firstName: string;
   lastName: string;
   role: string;
+  permissions?: string[];
   status?: string;
   invitedBy?: string | null;
   createdAt?: string;

@@ -34,6 +34,9 @@ export class PerDiemPolicy {
   @Prop({ required: true, default: 0 })
   priority: number;
 
+  @Prop({ required: true, default: 1, min: 1 })
+  version: number;
+
   @Prop({ type: Date, default: null })
   effectiveFrom: Date | null;
 

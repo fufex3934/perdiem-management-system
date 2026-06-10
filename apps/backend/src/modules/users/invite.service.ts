@@ -19,6 +19,7 @@ import {
 import { InviteRepository } from './invite.repository';
 import { InviteDocument } from './schemas/invite.schema';
 import { UserRepository } from './user.repository';
+import { EmailService } from '@/infrastructure/email/email.service';
 import { SecurityAuditService } from '../security/security-audit.service';
 import { UserManagementService } from './user-management.service';
 
@@ -31,6 +32,7 @@ export class InviteService {
     private readonly userRepository: UserRepository,
     private readonly userManagementService: UserManagementService,
     private readonly securityAuditService: SecurityAuditService,
+    private readonly emailService: EmailService,
     private readonly configService: ConfigService<AllConfig, true>,
   ) {}
 
@@ -98,6 +100,20 @@ export class InviteService {
     });
 
     const corsOrigin = this.configService.get('app.corsOrigins', { infer: true })[0];
+    const acceptUrl = `${corsOrigin}/invite/accept?token=${rawToken}`;
+
+    const inviter = await this.userRepository.findByIdInTenant(tenantId, actor.userId);
+    const inviterName = inviter
+      ? `${inviter.firstName} ${inviter.lastName}`.trim()
+      : actor.email;
+
+    await this.emailService.sendInviteEmail({
+      to: dto.email,
+      firstName: dto.firstName.trim(),
+      inviterName: inviterName || actor.email,
+      acceptUrl,
+      expiresInDays: INVITE_EXPIRY_DAYS,
+    });
 
     this.securityAuditService.record({
       tenantId,
@@ -114,7 +130,8 @@ export class InviteService {
     return {
       invite: this.mapInvite(invite),
       inviteToken: rawToken,
-      acceptUrl: `${corsOrigin}/invite/accept?token=${rawToken}`,
+      acceptUrl,
+      emailSent: true,
     };
   }
 

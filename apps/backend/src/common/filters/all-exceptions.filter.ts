@@ -11,6 +11,7 @@ import { Request, Response } from 'express';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
 import { AllConfig } from '@/infrastructure/config/configuration';
+import { captureException } from '@/infrastructure/observability/sentry';
 import { ErrorResponseDto } from '../dto/error-response.dto';
 
 @Catch()
@@ -77,6 +78,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
       error: exception instanceof Error ? exception.message : String(exception),
       stack: exception instanceof Error ? exception.stack : undefined,
     });
+
+    if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
+      captureException(exception, { requestId, path: request.url });
+    }
 
     response.status(status).json(errorResponse);
   }

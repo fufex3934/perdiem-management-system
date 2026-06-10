@@ -17,11 +17,11 @@ import {
 } from './auth-storage';
 import {
   canCalculatePerDiem,
+  canDeletePolicies,
   canExportAnalytics,
   canExportFinance,
   canManageApprovals,
   canManagePolicies,
-  canDeletePolicies,
   canManageTravelRequests,
   canManageUsers,
   canProcessFinance,
@@ -34,11 +34,13 @@ import {
   hasPermission,
   isTenantAdmin,
   Permission,
+  resolvePermissions,
 } from './permissions';
 import type { AuthSession, AuthUser, LoginInput, RegisterTenantInput } from './auth-types';
 
 export interface AuthContextValue {
   user: AuthUser | null;
+  permissions: Permission[];
   accessToken: string | null;
   tenantId: string | null;
   isLoading: boolean;
@@ -62,6 +64,7 @@ export interface AuthContextValue {
   hasPermission: (permission: Permission) => boolean;
   login: (input: LoginInput) => Promise<void>;
   registerTenant: (input: RegisterTenantInput) => Promise<void>;
+  completeOAuthSignIn: (code: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -72,15 +75,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<AuthSession | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    setSession(getStoredSession());
-    setIsLoading(false);
-  }, []);
-
   const persistSession = useCallback((next: AuthSession) => {
     storeSession(next);
     setSession(next);
   }, []);
+
+  useEffect(() => {
+    const stored = getStoredSession();
+    if (!stored?.tokens.accessToken || !stored.user.tenantId) {
+      setSession(stored);
+      setIsLoading(false);
+      return;
+    }
+
+    setSession(stored);
+    authApi
+      .getProfile(stored.tokens.accessToken, stored.user.tenantId)
+      .then((user) => persistSession({ ...stored, user }))
+      .catch(() => setSession(stored))
+      .finally(() => setIsLoading(false));
+  }, [persistSession]);
 
   const login = useCallback(
     async (input: LoginInput) => {
@@ -100,6 +114,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [persistSession, router],
   );
 
+  const completeOAuthSignIn = useCallback(
+    async (code: string) => {
+      const next = await authApi.exchangeOAuthCode(code);
+      persistSession(next);
+      router.push('/dashboard');
+    },
+    [persistSession, router],
+  );
+
   const logout = useCallback(async () => {
     if (session) {
       try {
@@ -113,37 +136,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     router.push('/login');
   }, [router, session]);
 
-  const role = session?.user.role ?? '';
+  const user = session?.user ?? null;
+  const role = user?.role ?? '';
+  const permissions = useMemo(
+    () => (user ? resolvePermissions(user) : []),
+    [user],
+  );
 
   const value = useMemo<AuthContextValue>(
     () => ({
-      user: session?.user ?? null,
+      user,
+      permissions,
       accessToken: session?.tokens.accessToken ?? null,
-      tenantId: session?.user.tenantId ?? null,
+      tenantId: user?.tenantId ?? null,
       isLoading,
       isAuthenticated: Boolean(session?.tokens.accessToken),
       isTenantAdmin: isTenantAdmin(role),
-      canManageUsers: canManageUsers(role),
-      canManagePolicies: canManagePolicies(role),
-      canDeletePolicies: canDeletePolicies(role),
-      canCalculatePerDiem: canCalculatePerDiem(role),
-      canManageTravelRequests: canManageTravelRequests(role),
-      canReadAllTravelRequests: canReadAllTravelRequests(role),
-      canManageApprovals: canManageApprovals(role),
-      canViewFinance: canViewFinance(role),
-      canReadAllFinance: canReadAllFinance(role),
-      canProcessFinance: canProcessFinance(role),
-      canExportFinance: canExportFinance(role),
-      canViewAnalytics: canViewAnalytics(role),
-      canReadAllAnalytics: canReadAllAnalytics(role),
-      canExportAnalytics: canExportAnalytics(role),
-      canViewSecurityAudit: canViewSecurityAudit(role),
-      hasPermission: (permission: Permission) => hasPermission(role, permission),
+      canManageUsers: canManageUsers(permissions),
+      canManagePolicies: canManagePolicies(permissions),
+      canDeletePolicies: canDeletePolicies(permissions),
+      canCalculatePerDiem: canCalculatePerDiem(permissions),
+      canManageTravelRequests: canManageTravelRequests(permissions),
+      canReadAllTravelRequests: canReadAllTravelRequests(permissions),
+      canManageApprovals: canManageApprovals(permissions),
+      canViewFinance: canViewFinance(permissions),
+      canReadAllFinance: canReadAllFinance(permissions),
+      canProcessFinance: canProcessFinance(permissions),
+      canExportFinance: canExportFinance(permissions),
+      canViewAnalytics: canViewAnalytics(permissions),
+      canReadAllAnalytics: canReadAllAnalytics(permissions),
+      canExportAnalytics: canExportAnalytics(permissions),
+      canViewSecurityAudit: canViewSecurityAudit(permissions),
+      hasPermission: (permission: Permission) => hasPermission(permissions, permission),
       login,
       registerTenant,
+      completeOAuthSignIn,
       logout,
     }),
-    [session, isLoading, role, login, registerTenant, logout],
+    [session, user, permissions, role, isLoading, login, registerTenant, completeOAuthSignIn, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

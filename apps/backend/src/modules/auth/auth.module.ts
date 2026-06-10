@@ -9,6 +9,10 @@ import { TenantModule } from '../tenant/tenant.module';
 import { UserModule } from '../users/user.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { GoogleOAuthService } from './google-oauth.service';
+import { MicrosoftOAuthService } from './microsoft-oauth.service';
+import { OAuthExchangeService } from './oauth-exchange.service';
+import { SamlAuthService } from './saml-auth.service';
 import { RefreshTokenRepository } from './refresh-token.repository';
 import { RefreshToken, RefreshTokenSchema } from './schemas/refresh-token.schema';
 import { JwtAccessStrategy } from './strategies/jwt-access.strategy';
@@ -36,7 +40,15 @@ import { JwtAccessStrategy } from './strategies/jwt-access.strategy';
     forwardRef(() => UserModule),
   ],
   controllers: [AuthController],
-  providers: [AuthService, RefreshTokenRepository, JwtAccessStrategy],
+  providers: [
+    AuthService,
+    GoogleOAuthService,
+    MicrosoftOAuthService,
+    SamlAuthService,
+    OAuthExchangeService,
+    RefreshTokenRepository,
+    JwtAccessStrategy,
+  ],
   exports: [AuthService, RefreshTokenRepository],
 })
 export class AuthModule {}

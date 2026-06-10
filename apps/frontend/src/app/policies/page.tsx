@@ -3,6 +3,8 @@
 import { Calculator, FileText } from 'lucide-react';
 import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { AppShell } from '@/components/layout/app-shell';
+import { PolicyEditDialog } from '@/components/shared/policy-edit-dialog';
+import { PolicyVersionDialog } from '@/components/shared/policy-version-dialog';
 import { EmptyState } from '@/components/shared/empty-state';
 import { ErrorAlert } from '@/components/shared/error-alert';
 import { PageHeader } from '@/components/shared/page-header';
@@ -33,6 +35,8 @@ export default function PoliciesPage() {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [historyPolicy, setHistoryPolicy] = useState<Policy | null>(null);
+  const [editPolicy, setEditPolicy] = useState<Policy | null>(null);
 
   const loadPolicies = useCallback(async () => {
     if (!auth.accessToken || !auth.tenantId) return;
@@ -246,7 +250,8 @@ export default function PoliciesPage() {
                     <TableHead>Role</TableHead>
                     <TableHead>Rate</TableHead>
                     <TableHead>Priority</TableHead>
-                    {auth.canDeletePolicies && <TableHead className="text-right">Actions</TableHead>}
+                    <TableHead>Version</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -260,19 +265,37 @@ export default function PoliciesPage() {
                       <TableCell>
                         {policy.dailyRate} {policy.currency}
                       </TableCell>
-                      <TableCell>{policy.priority}</TableCell>
-                      {auth.canDeletePolicies && (
-                        <TableCell className="text-right">
+                      <TableCell>{policy.version ?? 1}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          {auth.canManagePolicies && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setEditPolicy(policy)}
+                            >
+                              Edit
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="text-destructive hover:text-destructive"
-                            onClick={() => handleDeletePolicy(policy.id)}
+                            onClick={() => setHistoryPolicy(policy)}
                           >
-                            Delete
+                            History
                           </Button>
-                        </TableCell>
-                      )}
+                          {auth.canDeletePolicies && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-destructive hover:text-destructive"
+                              onClick={() => handleDeletePolicy(policy.id)}
+                            >
+                              Delete
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -280,6 +303,21 @@ export default function PoliciesPage() {
             )}
           </CardContent>
         </Card>
+        <PolicyEditDialog
+          open={editPolicy !== null}
+          onOpenChange={(open) => !open && setEditPolicy(null)}
+          policy={editPolicy}
+          accessToken={auth.accessToken!}
+          tenantId={auth.tenantId!}
+          onSaved={() => loadPolicies().catch((err: Error) => setError(err.message))}
+        />
+        <PolicyVersionDialog
+          open={historyPolicy !== null}
+          onOpenChange={(open) => !open && setHistoryPolicy(null)}
+          policy={historyPolicy}
+          accessToken={auth.accessToken!}
+          tenantId={auth.tenantId!}
+        />
       </div>
     </AppShell>
   );

@@ -364,6 +364,107 @@ GitHub Actions workflow (`.github/workflows/ci.yml`) runs on push/PR to `main`:
 | GET | `/api/v1/health/live` | Liveness probe |
 | GET | `/api/v1/health/ready` | Readiness probe |
 
+## Enterprise upgrades
+
+| Feature | Description |
+|---------|-------------|
+| **Server-driven permissions** | Login and `/auth/me` return `user.permissions` from the backend RBAC matrix — the UI no longer guesses access from role alone |
+| **Invite emails** | Invites trigger email delivery (`EMAIL_PROVIDER=console` logs in dev; `smtp` + SMTP_* for production) |
+| **API documentation** | OpenAPI/Swagger UI at `/api/docs` (non-production environments) |
+| **Error boundary** | Frontend catches unexpected render errors with a recovery UI |
+| **Redis job queue** | Domain events (notifications) processed async via BullMQ when `REDIS_URL` is set; sync fallback without Redis |
+| **Google OAuth SSO** | Tenant-scoped Google sign-in with secure one-time code exchange |
+| **Microsoft OAuth SSO** | Azure AD / Entra ID sign-in (same tenant-scoped flow) |
+| **Policy versioning** | Policy edits snapshot previous versions; edit in UI, view history via API and **History** button |
+| **Redis health checks** | `/health` and `/health/ready` include Redis when configured |
+| **SAML SSO** | Enterprise IdP sign-in (Okta, Azure AD SAML, etc.) with SP metadata endpoint |
+| **Sentry observability** | Optional error reporting when `SENTRY_DSN` / `NEXT_PUBLIC_SENTRY_DSN` are set |
+
+### Email configuration
+
+```bash
+# Development — emails logged to API console
+EMAIL_PROVIDER=console
+EMAIL_FROM=noreply@perdiem.local
+
+# Production — SMTP
+EMAIL_PROVIDER=smtp
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_USER=...
+SMTP_PASS=...
+```
+
+### Redis (async notifications)
+
+```bash
+# Optional locally — without Redis, notifications run synchronously in-process
+REDIS_URL=redis://localhost:6379
+```
+
+Docker Compose includes Redis and wires `REDIS_URL` for the API automatically.
+
+### Google OAuth SSO
+
+1. Create OAuth credentials in [Google Cloud Console](https://console.cloud.google.com/)
+2. Set authorized redirect URI: `http://localhost:3001/api/v1/auth/google/callback`
+3. Configure:
+
+```bash
+GOOGLE_OAUTH_ENABLED=true
+GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your-client-secret
+GOOGLE_CALLBACK_URL=http://localhost:3001/api/v1/auth/google/callback
+```
+
+Users must enter their **organization slug** on the login page, then click **Continue with Google**. The Google account email must match an active user in that tenant.
+
+### Microsoft Azure AD SSO
+
+1. Register an app in [Microsoft Entra ID](https://portal.azure.com/)
+2. Redirect URI: `http://localhost:3001/api/v1/auth/microsoft/callback`
+3. Configure:
+
+```bash
+MICROSOFT_OAUTH_ENABLED=true
+MICROSOFT_CLIENT_ID=your-application-id
+MICROSOFT_CLIENT_SECRET=your-client-secret
+MICROSOFT_DIRECTORY_TENANT_ID=common
+MICROSOFT_CALLBACK_URL=http://localhost:3001/api/v1/auth/microsoft/callback
+```
+
+### Policy versioning
+
+Each `PATCH /policies/:id` saves a snapshot of the previous version and increments the policy version. Managers and tenant admins can **Edit** policies in the UI; view history at `GET /policies/:id/versions` or via the **History** button on the Policies page.
+
+### SAML SSO
+
+1. Configure your IdP with the SP metadata URL: `http://localhost:3001/api/v1/auth/saml/metadata`
+2. Set ACS / callback URL: `http://localhost:3001/api/v1/auth/saml/callback`
+3. Configure:
+
+```bash
+SAML_ENABLED=true
+SAML_ENTRY_POINT=https://your-idp.example.com/sso/saml
+SAML_ISSUER=http://localhost:3001/api/v1/auth/saml/metadata
+SAML_IDP_CERT=-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----
+SAML_CALLBACK_URL=http://localhost:3001/api/v1/auth/saml/callback
+```
+
+Users enter their organization slug, then click **Continue with SSO**. The SAML assertion email must match an active user in that tenant.
+
+### Sentry (error monitoring)
+
+```bash
+# Backend — captures unhandled 5xx errors
+SENTRY_DSN=https://your-key@o123.ingest.sentry.io/456
+
+# Frontend — captures React error boundary failures
+NEXT_PUBLIC_SENTRY_DSN=https://your-key@o123.ingest.sentry.io/789
+```
+
+When unset, Sentry is fully disabled with zero runtime overhead.
+
 ## License
 
 UNLICENSED — Private enterprise software

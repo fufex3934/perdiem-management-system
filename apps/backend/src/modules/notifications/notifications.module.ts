@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UserModule } from '../users/user.module';
 import { EventBusService } from './event-bus.service';
-import { NotificationEventListener } from './notification-event.listener';
+import { NotificationEventHandler } from './notification-event.handler';
 import { NotificationPublisher } from './notification.publisher';
 import { NotificationRepository } from './notification.repository';
 import { NotificationService } from './notification.service';
@@ -17,11 +17,11 @@ import { Notification, NotificationSchema } from './schemas/notification.schema'
   controllers: [NotificationsController],
   providers: [
     EventBusService,
+    NotificationEventHandler,
     NotificationRepository,
     NotificationService,
-    NotificationEventListener,
     NotificationPublisher,
   ],
-  exports: [NotificationPublisher, NotificationService, EventBusService],
+  exports: [NotificationPublisher, NotificationService, EventBusService, NotificationEventHandler],
 })
 export class NotificationsModule {}

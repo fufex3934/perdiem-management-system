@@ -1,54 +1,49 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { NotificationType } from '@/common/enums/notification-type.enum';
 import { UserRole } from '@/common/enums/user-role.enum';
 import { UserRepository } from '../users/user.repository';
-import { EventBusService } from './event-bus.service';
 import {
   DomainEventType,
+  DomainEventPayload,
   PaymentEventPayload,
   TravelRequestEventPayload,
 } from './events/domain-event.type';
 import { NotificationService } from './notification.service';
 
 @Injectable()
-export class NotificationEventListener implements OnModuleInit {
+export class NotificationEventHandler {
   constructor(
-    private readonly eventBus: EventBusService,
     private readonly notificationService: NotificationService,
     private readonly userRepository: UserRepository,
   ) {}
 
-  onModuleInit(): void {
-    this.eventBus.subscribe(
-      DomainEventType.TRAVEL_REQUEST_SUBMITTED,
-      (payload) => this.handleTravelSubmitted(payload as TravelRequestEventPayload),
-    );
-    this.eventBus.subscribe(
-      DomainEventType.TRAVEL_REQUEST_STEP_APPROVED,
-      (payload) => this.handleStepApproved(payload as TravelRequestEventPayload),
-    );
-    this.eventBus.subscribe(
-      DomainEventType.TRAVEL_REQUEST_APPROVED,
-      (payload) => this.handleTravelApproved(payload as TravelRequestEventPayload),
-    );
-    this.eventBus.subscribe(
-      DomainEventType.TRAVEL_REQUEST_REJECTED,
-      (payload) => this.handleTravelRejected(payload as TravelRequestEventPayload),
-    );
-    this.eventBus.subscribe(
-      DomainEventType.PAYMENT_CREATED,
-      (payload) => this.handlePaymentCreated(payload as PaymentEventPayload),
-    );
-    this.eventBus.subscribe(
-      DomainEventType.PAYMENT_PAID,
-      (payload) => this.handlePaymentPaid(payload as PaymentEventPayload),
-    );
+  async handle(eventType: DomainEventType, payload: DomainEventPayload): Promise<void> {
+    switch (eventType) {
+      case DomainEventType.TRAVEL_REQUEST_SUBMITTED:
+        await this.handleTravelSubmitted(payload as TravelRequestEventPayload);
+        break;
+      case DomainEventType.TRAVEL_REQUEST_STEP_APPROVED:
+        await this.handleStepApproved(payload as TravelRequestEventPayload);
+        break;
+      case DomainEventType.TRAVEL_REQUEST_APPROVED:
+        await this.handleTravelApproved(payload as TravelRequestEventPayload);
+        break;
+      case DomainEventType.TRAVEL_REQUEST_REJECTED:
+        await this.handleTravelRejected(payload as TravelRequestEventPayload);
+        break;
+      case DomainEventType.PAYMENT_CREATED:
+        await this.handlePaymentCreated(payload as PaymentEventPayload);
+        break;
+      case DomainEventType.PAYMENT_PAID:
+        await this.handlePaymentPaid(payload as PaymentEventPayload);
+        break;
+      default:
+        break;
+    }
   }
 
   private async handleTravelSubmitted(payload: TravelRequestEventPayload): Promise<void> {
-    if (!payload.requiredRole) {
-      return;
-    }
+    if (!payload.requiredRole) return;
 
     const approverIds = await this.getApproverIds(payload.tenantId, payload.requiredRole);
     const recipients = approverIds.filter((id) => id !== payload.requesterId);
@@ -65,9 +60,7 @@ export class NotificationEventListener implements OnModuleInit {
   }
 
   private async handleStepApproved(payload: TravelRequestEventPayload): Promise<void> {
-    if (!payload.requiredRole) {
-      return;
-    }
+    if (!payload.requiredRole) return;
 
     const approverIds = await this.getApproverIds(payload.tenantId, payload.requiredRole);
     const recipients = approverIds.filter((id) => id !== payload.requesterId);

@@ -22,7 +22,9 @@ interface AuthFormProps {
   fields: Field[];
   submitLabel: string;
   onSubmit: (values: Record<string, string>) => Promise<void>;
+  onFieldChange?: (name: string, value: string) => void;
   footer?: React.ReactNode;
+  extra?: React.ReactNode;
 }
 
 export function AuthForm({
@@ -31,7 +33,9 @@ export function AuthForm({
   fields,
   submitLabel,
   onSubmit,
+  onFieldChange,
   footer,
+  extra,
 }: AuthFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -76,6 +80,7 @@ export function AuthForm({
                 type={field.type ?? 'text'}
                 placeholder={field.placeholder}
                 required={field.required ?? true}
+                onChange={(e) => onFieldChange?.(field.name, e.target.value)}
               />
             </div>
           ))}
@@ -86,6 +91,8 @@ export function AuthForm({
             {isSubmitting ? 'Please wait...' : submitLabel}
           </Button>
         </form>
+
+        {extra}
 
         {footer && (
           <div className="mt-6 text-center text-sm text-muted-foreground">{footer}</div>

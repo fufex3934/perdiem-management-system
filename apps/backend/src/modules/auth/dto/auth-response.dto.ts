@@ -1,3 +1,4 @@
+import { Permission } from '@/common/enums/permission.enum';
 import { UserRole } from '@/common/enums/user-role.enum';
 
 export class AuthUserDto {
@@ -7,6 +8,7 @@ export class AuthUserDto {
   firstName: string;
   lastName: string;
   role: UserRole;
+  permissions: Permission[];
 }
 
 export class AuthTokensDto {

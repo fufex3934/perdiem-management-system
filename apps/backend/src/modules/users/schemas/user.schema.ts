@@ -31,6 +31,15 @@ export class User {
   @Prop({ type: Types.ObjectId, default: null })
   invitedBy: Types.ObjectId | null;
 
+  @Prop({ type: String, default: null })
+  googleId: string | null;
+
+  @Prop({ type: String, default: null })
+  microsoftId: string | null;
+
+  @Prop({ type: String, default: null })
+  samlNameId: string | null;
+
   @Prop({ default: false })
   isDeleted: boolean;
 

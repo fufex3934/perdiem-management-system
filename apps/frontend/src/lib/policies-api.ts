@@ -11,6 +11,7 @@ export interface Policy {
   currency: string;
   status: string;
   priority: number;
+  version?: number;
   effectiveFrom: string | null;
   effectiveTo: string | null;
   createdAt: string;
@@ -38,11 +39,45 @@ export interface CreatePolicyInput {
   effectiveTo?: string;
 }
 
+export interface UpdatePolicyInput {
+  name?: string;
+  description?: string;
+  countryCode?: string;
+  role?: string | null;
+  dailyRate?: number;
+  currency?: string;
+  status?: string;
+  priority?: number;
+  effectiveFrom?: string;
+  effectiveTo?: string;
+}
+
 export interface CalculatePerDiemInput {
   countryCode: string;
   role: string;
   days: number;
   startDate?: string;
+}
+
+export interface PolicyVersion {
+  id: string;
+  policyId: string;
+  version: number;
+  snapshot: {
+    name: string;
+    description: string;
+    countryCode: string;
+    role: string | null;
+    dailyRate: number;
+    currency: string;
+    status: string;
+    priority: number;
+    effectiveFrom: string | null;
+    effectiveTo: string | null;
+  };
+  changedBy: string;
+  changedByEmail: string;
+  createdAt: string;
 }
 
 export interface CalculationResult {
@@ -81,6 +116,32 @@ export async function createPolicy(
   const response = await apiClient.post<Policy>(
     '/policies',
     input,
+    authOptions(token, tenantId),
+  );
+  return response.data;
+}
+
+export async function updatePolicy(
+  token: string,
+  tenantId: string,
+  policyId: string,
+  input: UpdatePolicyInput,
+): Promise<Policy> {
+  const response = await apiClient.patch<Policy>(
+    `/policies/${policyId}`,
+    input,
+    authOptions(token, tenantId),
+  );
+  return response.data;
+}
+
+export async function listPolicyVersions(
+  token: string,
+  tenantId: string,
+  policyId: string,
+): Promise<PolicyVersion[]> {
+  const response = await apiClient.get<PolicyVersion[]>(
+    `/policies/${policyId}/versions`,
     authOptions(token, tenantId),
   );
   return response.data;

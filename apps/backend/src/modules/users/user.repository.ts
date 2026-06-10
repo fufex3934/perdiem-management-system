@@ -151,4 +151,22 @@ export class UserRepository {
       status: UserStatus.ACTIVE,
     });
   }
+
+  linkGoogleAccount(userId: string, googleId: string): Promise<UserDocument | null> {
+    return this.userModel
+      .findByIdAndUpdate(userId, { googleId }, { new: true })
+      .exec();
+  }
+
+  linkMicrosoftAccount(userId: string, microsoftId: string): Promise<UserDocument | null> {
+    return this.userModel
+      .findByIdAndUpdate(userId, { microsoftId }, { new: true })
+      .exec();
+  }
+
+  linkSamlAccount(userId: string, samlNameId: string): Promise<UserDocument | null> {
+    return this.userModel
+      .findByIdAndUpdate(userId, { samlNameId }, { new: true })
+      .exec();
+  }
 }

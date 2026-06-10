@@ -13,6 +13,7 @@ export class PolicyResponseDto {
   currency: string;
   status: PolicyStatus;
   priority: number;
+  version: number;
   effectiveFrom: Date | null;
   effectiveTo: Date | null;
   createdAt: Date;
@@ -30,6 +31,7 @@ export class PolicyResponseDto {
       currency: policy.currency,
       status: policy.status,
       priority: policy.priority,
+      version: policy.version ?? 1,
       effectiveFrom: policy.effectiveFrom,
       effectiveTo: policy.effectiveTo,
       createdAt: policy.createdAt ?? new Date(),

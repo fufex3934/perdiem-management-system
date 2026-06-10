@@ -3,18 +3,25 @@ import { Types } from 'mongoose';
 import { ErrorCodes } from '@/common/constants/error-codes';
 import { PolicyStatus } from '@/common/enums/policy-status.enum';
 import { BusinessException } from '@/common/exceptions/business.exception';
+import { AuthenticatedUser } from '@/common/interfaces/authenticated-user.interface';
 import { CreatePolicyDto } from './dto/create-policy.dto';
 import { ListPoliciesQueryDto } from './dto/list-policies-query.dto';
 import {
   PaginatedPoliciesResponseDto,
   PolicyResponseDto,
 } from './dto/policy-response.dto';
+import { PolicyVersionResponseDto } from './dto/policy-version-response.dto';
 import { UpdatePolicyDto } from './dto/update-policy.dto';
+import { PolicyVersionRepository } from './policy-version.repository';
 import { PolicyRepository } from './policy.repository';
+import { PerDiemPolicyDocument } from './schemas/per-diem-policy.schema';
 
 @Injectable()
 export class PolicyService {
-  constructor(private readonly policyRepository: PolicyRepository) {}
+  constructor(
+    private readonly policyRepository: PolicyRepository,
+    private readonly policyVersionRepository: PolicyVersionRepository,
+  ) {}
 
   async create(tenantId: string, dto: CreatePolicyDto): Promise<PolicyResponseDto> {
     this.validateEffectiveDates(dto.effectiveFrom, dto.effectiveTo);
@@ -100,10 +107,33 @@ export class PolicyService {
     return PolicyResponseDto.fromDocument(policy);
   }
 
+  async listVersions(
+    tenantId: string,
+    policyId: string,
+  ): Promise<PolicyVersionResponseDto[]> {
+    const policy = await this.policyRepository.findByIdInTenant(tenantId, policyId);
+    if (!policy) {
+      throw new BusinessException(
+        {
+          code: ErrorCodes.POLICY_NOT_FOUND,
+          message: 'Policy not found',
+        },
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    const versions = await this.policyVersionRepository.findByPolicyInTenant(
+      tenantId,
+      policyId,
+    );
+    return versions.map((v) => PolicyVersionResponseDto.fromDocument(v));
+  }
+
   async update(
     tenantId: string,
     policyId: string,
     dto: UpdatePolicyDto,
+    actor?: AuthenticatedUser,
   ): Promise<PolicyResponseDto> {
     const existing = await this.policyRepository.findByIdInTenant(tenantId, policyId);
 
@@ -165,9 +195,36 @@ export class PolicyService {
       update.name = nextName;
     }
 
+    if (actor) {
+      await this.policyVersionRepository.create({
+        tenantId: new Types.ObjectId(tenantId),
+        policyId: existing._id,
+        version: existing.version ?? 1,
+        snapshot: this.toSnapshot(existing),
+        changedBy: new Types.ObjectId(actor.userId),
+        changedByEmail: actor.email,
+      });
+      update.version = (existing.version ?? 1) + 1;
+    }
+
     const updated = await this.policyRepository.updateInTenant(tenantId, policyId, update);
 
     return PolicyResponseDto.fromDocument(updated!);
+  }
+
+  private toSnapshot(policy: PerDiemPolicyDocument) {
+    return {
+      name: policy.name,
+      description: policy.description,
+      countryCode: policy.countryCode,
+      role: policy.role,
+      dailyRate: policy.dailyRate,
+      currency: policy.currency,
+      status: policy.status,
+      priority: policy.priority,
+      effectiveFrom: policy.effectiveFrom,
+      effectiveTo: policy.effectiveTo,
+    };
   }
 
   async delete(tenantId: string, policyId: string): Promise<{ message: string }> {

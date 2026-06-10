@@ -41,3 +41,19 @@ export async function getProfile(
   });
   return response.data;
 }
+
+export interface OAuthConfig {
+  google: boolean;
+  microsoft: boolean;
+  saml: boolean;
+}
+
+export async function getOAuthConfig(): Promise<OAuthConfig> {
+  const response = await apiClient.get<OAuthConfig>('/auth/oauth/config');
+  return response.data;
+}
+
+export async function exchangeOAuthCode(code: string): Promise<AuthSession> {
+  const response = await apiClient.post<AuthSession>('/auth/oauth/exchange', { code });
+  return response.data;
+}

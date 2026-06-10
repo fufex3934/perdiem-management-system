@@ -20,4 +20,5 @@ export class CreateInviteResponseDto {
   invite: InviteResponseDto;
   inviteToken: string;
   acceptUrl: string;
+  emailSent: boolean;
 }

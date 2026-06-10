@@ -44,6 +44,15 @@ export class PoliciesController {
     return this.policyService.list(user.tenantId, query);
   }
 
+  @Get(':policyId/versions')
+  @RequirePermissions(Permission.POLICIES_READ)
+  listVersions(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('policyId') policyId: string,
+  ) {
+    return this.policyService.listVersions(user.tenantId, policyId);
+  }
+
   @Get(':id')
   @RequirePermissions(Permission.POLICIES_READ)
   getById(@CurrentUser() user: AuthenticatedUser, @Param('id') policyId: string) {
@@ -57,7 +66,7 @@ export class PoliciesController {
     @Param('id') policyId: string,
     @Body() dto: UpdatePolicyDto,
   ) {
-    return this.policyService.update(user.tenantId, policyId, dto);
+    return this.policyService.update(user.tenantId, policyId, dto, user);
   }
 
   @Delete(':id')

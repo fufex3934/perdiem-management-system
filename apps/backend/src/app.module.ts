@@ -14,7 +14,9 @@ import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import configuration from './infrastructure/config/configuration';
 import { validate } from './infrastructure/config/env.validation';
 import { DatabaseModule } from './infrastructure/database/database.module';
+import { EmailModule } from './infrastructure/email/email.module';
 import { LoggerModule } from './infrastructure/logging/logger.module';
+import { QueueModule } from './infrastructure/queue/queue.module';
 import { RateLimitService } from './common/rate-limit/rate-limit.service';
 import { MetricsInterceptor } from './modules/metrics/metrics.interceptor';
 import { MetricsModule } from './modules/metrics/metrics.module';
@@ -38,6 +40,8 @@ import { UserModule } from './modules/users/user.module';
       envFilePath: ['.env', '../../.env'],
     }),
     DatabaseModule,
+    EmailModule,
+    QueueModule.forRootOptional(),
     LoggerModule,
     TenantModule,
     UserModule,

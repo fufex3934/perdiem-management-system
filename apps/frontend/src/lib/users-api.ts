@@ -35,6 +35,7 @@ export interface CreateInviteResponse {
   invite: Invite;
   inviteToken: string;
   acceptUrl: string;
+  emailSent: boolean;
 }
 
 function authOptions(token: string, tenantId: string) {

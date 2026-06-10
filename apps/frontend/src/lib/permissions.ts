@@ -38,7 +38,8 @@ export const UserRole = {
 
 export type UserRole = (typeof UserRole)[keyof typeof UserRole];
 
-const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
+/** Fallback when loading a legacy session without server permissions. */
+const ROLE_PERMISSIONS_FALLBACK: Record<UserRole, Permission[]> = {
   [UserRole.TENANT_ADMIN]: Object.values(Permission),
   [UserRole.MANAGER]: [
     Permission.USERS_READ,
@@ -78,74 +79,80 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
   ],
 };
 
-export function getPermissionsForRole(role: string): Permission[] {
-  return ROLE_PERMISSIONS[role as UserRole] ?? [];
+export function resolvePermissions(user: {
+  role: string;
+  permissions?: string[];
+}): Permission[] {
+  if (user.permissions?.length) {
+    return user.permissions as Permission[];
+  }
+  return ROLE_PERMISSIONS_FALLBACK[user.role as UserRole] ?? [];
 }
 
-export function hasPermission(role: string, permission: Permission): boolean {
-  return getPermissionsForRole(role).includes(permission);
+export function hasPermission(permissions: Permission[], permission: Permission): boolean {
+  return permissions.includes(permission);
 }
 
 export function isTenantAdmin(role: string): boolean {
   return role === UserRole.TENANT_ADMIN;
 }
 
-export function canManageUsers(role: string): boolean {
-  return hasPermission(role, Permission.USERS_READ);
+export function canManageUsers(permissions: Permission[]): boolean {
+  return hasPermission(permissions, Permission.USERS_READ);
 }
 
-export function canManagePolicies(role: string): boolean {
-  return hasPermission(role, Permission.POLICIES_WRITE);
+export function canManagePolicies(permissions: Permission[]): boolean {
+  return hasPermission(permissions, Permission.POLICIES_WRITE);
 }
 
-export function canDeletePolicies(role: string): boolean {
-  return hasPermission(role, Permission.POLICIES_DELETE);
+export function canDeletePolicies(permissions: Permission[]): boolean {
+  return hasPermission(permissions, Permission.POLICIES_DELETE);
 }
 
-export function canCalculatePerDiem(role: string): boolean {
-  return hasPermission(role, Permission.POLICIES_CALCULATE);
+export function canCalculatePerDiem(permissions: Permission[]): boolean {
+  return hasPermission(permissions, Permission.POLICIES_CALCULATE);
 }
 
-export function canManageTravelRequests(role: string): boolean {
-  return hasPermission(role, Permission.TRAVEL_REQUESTS_WRITE);
+export function canManageTravelRequests(permissions: Permission[]): boolean {
+  return hasPermission(permissions, Permission.TRAVEL_REQUESTS_WRITE);
 }
 
-export function canReadAllTravelRequests(role: string): boolean {
-  return hasPermission(role, Permission.TRAVEL_REQUESTS_READ_ALL);
+export function canReadAllTravelRequests(permissions: Permission[]): boolean {
+  return hasPermission(permissions, Permission.TRAVEL_REQUESTS_READ_ALL);
 }
 
-export function canManageApprovals(role: string): boolean {
-  return hasPermission(role, Permission.APPROVALS_APPROVE);
+export function canManageApprovals(permissions: Permission[]): boolean {
+  return hasPermission(permissions, Permission.APPROVALS_APPROVE);
 }
 
-export function canViewFinance(role: string): boolean {
-  return hasPermission(role, Permission.FINANCE_READ);
+export function canViewFinance(permissions: Permission[]): boolean {
+  return hasPermission(permissions, Permission.FINANCE_READ);
 }
 
-export function canReadAllFinance(role: string): boolean {
-  return hasPermission(role, Permission.FINANCE_READ_ALL);
+export function canReadAllFinance(permissions: Permission[]): boolean {
+  return hasPermission(permissions, Permission.FINANCE_READ_ALL);
 }
 
-export function canProcessFinance(role: string): boolean {
-  return hasPermission(role, Permission.FINANCE_PROCESS);
+export function canProcessFinance(permissions: Permission[]): boolean {
+  return hasPermission(permissions, Permission.FINANCE_PROCESS);
 }
 
-export function canExportFinance(role: string): boolean {
-  return hasPermission(role, Permission.FINANCE_EXPORT);
+export function canExportFinance(permissions: Permission[]): boolean {
+  return hasPermission(permissions, Permission.FINANCE_EXPORT);
 }
 
-export function canViewAnalytics(role: string): boolean {
-  return hasPermission(role, Permission.ANALYTICS_READ_OWN);
+export function canViewAnalytics(permissions: Permission[]): boolean {
+  return hasPermission(permissions, Permission.ANALYTICS_READ_OWN);
 }
 
-export function canReadAllAnalytics(role: string): boolean {
-  return hasPermission(role, Permission.ANALYTICS_READ);
+export function canReadAllAnalytics(permissions: Permission[]): boolean {
+  return hasPermission(permissions, Permission.ANALYTICS_READ);
 }
 
-export function canExportAnalytics(role: string): boolean {
-  return hasPermission(role, Permission.ANALYTICS_EXPORT);
+export function canExportAnalytics(permissions: Permission[]): boolean {
+  return hasPermission(permissions, Permission.ANALYTICS_EXPORT);
 }
 
-export function canViewSecurityAudit(role: string): boolean {
-  return hasPermission(role, Permission.SECURITY_AUDIT_READ);
+export function canViewSecurityAudit(permissions: Permission[]): boolean {
+  return hasPermission(permissions, Permission.SECURITY_AUDIT_READ);
 }

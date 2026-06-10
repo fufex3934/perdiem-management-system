@@ -99,6 +99,9 @@ export default function UsersPage() {
         {lastInvite && (
           <div className="rounded-xl border border-emerald-200 bg-emerald-50/80 p-4 text-sm text-emerald-900">
             <p className="font-medium">Invite created for {lastInvite.invite.email}</p>
+            {lastInvite.emailSent ? (
+              <p className="mt-1 text-emerald-800">An invitation email was sent.</p>
+            ) : null}
             <p className="mt-1 break-all text-emerald-800">Accept URL: {lastInvite.acceptUrl}</p>
           </div>
         )}

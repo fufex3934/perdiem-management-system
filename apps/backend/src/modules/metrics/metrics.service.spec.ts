@@ -7,10 +7,16 @@ describe('MetricsService', () => {
 
   beforeEach(() => {
     const configService = {
-      get: jest.fn().mockReturnValue({
-        name: 'perdiem-management-system',
-        version: '1.0.0',
-        nodeEnv: 'test',
+      get: jest.fn((key: string) => {
+        if (key === 'app') {
+          return { name: 'perdiem-management-system', version: '1.0.0', nodeEnv: 'test' };
+        }
+        if (key === 'redis') return { enabled: false };
+        if (key === 'googleOAuth') return { enabled: false };
+        if (key === 'microsoftOAuth') return { enabled: false };
+        if (key === 'saml') return { enabled: false };
+        if (key === 'observability') return { sentryEnabled: false };
+        return {};
       }),
     } as unknown as ConfigService<AllConfig, true>;
 
