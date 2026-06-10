@@ -101,6 +101,29 @@ pnpm --filter @perdiem/backend test:e2e
 - [x] Production logging (JSON) and trust proxy support
 - [x] E2E tests can use external MongoDB (CI-friendly)
 
+### Seed database (UI testing)
+
+Populate a demo tenant with users, policies, travel requests, payments, notifications, and audit logs:
+
+```bash
+# Requires MongoDB running (local or Docker)
+pnpm seed
+```
+
+| Field | Value |
+|-------|-------|
+| Tenant slug | `acme` |
+| Password (all users) | `DemoPass1!` |
+
+| Email | Role | What to test |
+|-------|------|--------------|
+| `admin@acme.com` | tenant_admin | Approvals, finance, security audit, analytics |
+| `manager@acme.com` | manager | Pending approvals (Chicago trip) |
+| `employee@acme.com` | employee | Own travel requests, notifications, analytics |
+| `john.doe@acme.com` | employee | Berlin payment pending, Paris rejected |
+
+Then start the app with `pnpm dev` and log in at http://localhost:3002.
+
 ### Docker
 
 ```bash

@@ -117,7 +117,7 @@ export class AnalyticsService {
       `total_paid,${report.totalPaid}`,
       `total_pending,${report.totalPending}`,
       '',
-      ...headers,
+      headers.join(','),
       ...rows,
     ];
 

@@ -1,4 +1,5 @@
 import { ConfigService } from '@nestjs/config';
+import { AllConfig } from '@/infrastructure/config/configuration';
 import { MetricsService } from './metrics.service';
 
 describe('MetricsService', () => {
@@ -11,7 +12,7 @@ describe('MetricsService', () => {
         version: '1.0.0',
         nodeEnv: 'test',
       }),
-    } as unknown as ConfigService;
+    } as unknown as ConfigService<AllConfig, true>;
 
     service = new MetricsService(configService);
   });

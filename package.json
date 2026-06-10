@@ -17,7 +17,9 @@
     "start:web": "pnpm --filter @perdiem/frontend start",
     "docker:up": "docker compose up --build -d",
     "docker:down": "docker compose down",
-    "docker:logs": "docker compose logs -f"
+    "docker:logs": "docker compose logs -f",
+    "seed": "pnpm --filter @perdiem/backend seed",
+    "seed:append": "pnpm --filter @perdiem/backend seed:append"
   },
   "devDependencies": {
     "typescript": "^5.8.3"
