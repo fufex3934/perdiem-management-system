@@ -4,12 +4,16 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
+import * as approvalsApi from '@/lib/approvals-api';
+import type { ApprovalAuditEntry } from '@/lib/approvals-api';
 import type { TravelRequest } from '@/lib/travel-requests-api';
 import * as travelRequestsApi from '@/lib/travel-requests-api';
 
 const STATUS_STYLES: Record<string, string> = {
   draft: 'bg-slate-100 text-slate-700',
-  submitted: 'bg-blue-100 text-blue-800',
+  pending_approval: 'bg-amber-100 text-amber-800',
+  approved: 'bg-emerald-100 text-emerald-800',
+  rejected: 'bg-red-100 text-red-800',
   cancelled: 'bg-red-100 text-red-800',
 };
 
@@ -27,6 +31,8 @@ export default function TravelRequestsPage() {
   } = useAuth();
 
   const [requests, setRequests] = useState<TravelRequest[]>([]);
+  const [auditTrail, setAuditTrail] = useState<ApprovalAuditEntry[] | null>(null);
+  const [auditRequestId, setAuditRequestId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -84,6 +90,18 @@ export default function TravelRequestsPage() {
     if (!accessToken || !tenantId) return;
     await travelRequestsApi.cancelTravelRequest(accessToken, tenantId, requestId);
     await loadRequests();
+  }
+
+  async function handleViewAudit(requestId: string) {
+    if (!accessToken || !tenantId) return;
+    setError(null);
+    try {
+      const trail = await approvalsApi.getAuditTrail(accessToken, tenantId, requestId);
+      setAuditTrail(trail);
+      setAuditRequestId(requestId);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load audit trail');
+    }
   }
 
   if (isLoading || !user) {
@@ -237,12 +255,22 @@ export default function TravelRequestsPage() {
                             </button>
                           )}
                           {canAct &&
-                            (request.status === 'draft' || request.status === 'submitted') && (
+                            (request.status === 'draft' ||
+                              request.status === 'pending_approval') && (
                               <button
                                 onClick={() => handleCancel(request.id)}
                                 className="text-red-600 hover:underline"
                               >
                                 Cancel
+                              </button>
+                            )}
+                          {(isOwner || canReadAllTravelRequests) &&
+                            request.status !== 'draft' && (
+                              <button
+                                onClick={() => handleViewAudit(request.id)}
+                                className="text-slate-600 hover:underline"
+                              >
+                                Audit
                               </button>
                             )}
                         </div>
@@ -254,6 +282,43 @@ export default function TravelRequestsPage() {
             </table>
           </div>
         </section>
+
+        {auditTrail && auditRequestId && (
+          <section className="rounded-2xl border bg-white p-6 shadow-sm">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-slate-900">Audit trail</h2>
+              <button
+                onClick={() => {
+                  setAuditTrail(null);
+                  setAuditRequestId(null);
+                }}
+                className="text-sm text-slate-500 hover:underline"
+              >
+                Close
+              </button>
+            </div>
+            <ol className="mt-4 space-y-3">
+              {auditTrail.map((entry) => (
+                <li
+                  key={entry.id}
+                  className="rounded-lg border border-slate-100 bg-slate-50 px-4 py-3 text-sm"
+                >
+                  <span className="font-medium capitalize text-slate-900">{entry.action}</span>
+                  <span className="text-slate-500">
+                    {' '}
+                    · {entry.previousStatus} → {entry.newStatus}
+                  </span>
+                  {entry.comment && (
+                    <p className="mt-1 text-slate-600">&ldquo;{entry.comment}&rdquo;</p>
+                  )}
+                  <p className="mt-1 text-xs text-slate-400">
+                    {new Date(entry.createdAt).toLocaleString()} · {entry.actorRole}
+                  </p>
+                </li>
+              ))}
+            </ol>
+          </section>
+        )}
 
         {error && (
           <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">

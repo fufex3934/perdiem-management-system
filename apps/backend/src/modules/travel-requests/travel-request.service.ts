@@ -14,6 +14,7 @@ import {
   TravelRequestResponseDto,
 } from './dto/travel-request-response.dto';
 import { UpdateTravelRequestDto } from './dto/update-travel-request.dto';
+import { ApprovalService } from './approval.service';
 import { TravelRequestDocument } from './schemas/travel-request.schema';
 import { TravelRequestRepository } from './travel-request.repository';
 
@@ -25,6 +26,7 @@ export class TravelRequestService {
   constructor(
     private readonly travelRequestRepository: TravelRequestRepository,
     private readonly policyCalculationService: PolicyCalculationService,
+    private readonly approvalService: ApprovalService,
   ) {}
 
   async create(
@@ -61,6 +63,8 @@ export class TravelRequestService {
       totalAmount: calculation.totalAmount,
       appliedPolicyRole: calculation.appliedRole,
       status: TravelRequestStatus.DRAFT,
+      approvalSteps: [],
+      currentStepIndex: -1,
     });
 
     return TravelRequestResponseDto.fromDocument(request);
@@ -176,16 +180,7 @@ export class TravelRequestService {
       );
     }
 
-    const updated = await this.travelRequestRepository.updateInTenant(
-      actor.tenantId,
-      requestId,
-      {
-        status: TravelRequestStatus.SUBMITTED,
-        submittedAt: new Date(),
-      },
-    );
-
-    return TravelRequestResponseDto.fromDocument(updated!);
+    return this.approvalService.processSubmit(actor, existing);
   }
 
   async cancel(
@@ -197,12 +192,12 @@ export class TravelRequestService {
 
     if (
       existing.status !== TravelRequestStatus.DRAFT &&
-      existing.status !== TravelRequestStatus.SUBMITTED
+      existing.status !== TravelRequestStatus.PENDING_APPROVAL
     ) {
       throw new BusinessException(
         {
           code: ErrorCodes.TRAVEL_REQUEST_INVALID_STATUS,
-          message: 'Only draft or submitted travel requests can be cancelled',
+          message: 'Only draft or pending approval travel requests can be cancelled',
           details: { status: existing.status },
         },
         HttpStatus.CONFLICT,
@@ -215,8 +210,11 @@ export class TravelRequestService {
       {
         status: TravelRequestStatus.CANCELLED,
         cancelledAt: new Date(),
+        currentStepIndex: -1,
       },
     );
+
+    await this.approvalService.recordCancel(actor, existing);
 
     return TravelRequestResponseDto.fromDocument(updated!);
   }

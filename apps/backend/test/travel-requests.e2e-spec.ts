@@ -142,11 +142,12 @@ describe('Travel Requests (e2e)', () => {
         .set('X-Tenant-Id', adminTenantId)
         .expect(201);
 
-      expect(response.body.data.status).toBe('submitted');
+      expect(response.body.data.status).toBe('pending_approval');
       expect(response.body.data.submittedAt).toBeTruthy();
+      expect(response.body.data.approvalSteps.length).toBeGreaterThan(0);
     });
 
-    it('should not update a submitted request', async () => {
+    it('should not update a pending approval request', async () => {
       const response = await request(app.getHttpServer())
         .patch(`/api/v1/travel-requests/${requestId}`)
         .set('Authorization', `Bearer ${employeeToken}`)
@@ -157,7 +158,7 @@ describe('Travel Requests (e2e)', () => {
       expect(response.body.code).toBe('TRAVEL_REQUEST_INVALID_STATUS');
     });
 
-    it('employee should cancel a submitted request', async () => {
+    it('employee should cancel a pending approval request', async () => {
       const response = await request(app.getHttpServer())
         .post(`/api/v1/travel-requests/${requestId}/cancel`)
         .set('Authorization', `Bearer ${employeeToken}`)

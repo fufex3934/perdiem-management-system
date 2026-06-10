@@ -2,6 +2,8 @@ import { Types } from 'mongoose';
 import { TravelRequestStatus } from '@/common/enums/travel-request-status.enum';
 import { UserRole } from '@/common/enums/user-role.enum';
 import { PolicyCalculationService } from '../policies/policy-calculation.service';
+import { ApprovalService } from './approval.service';
+import { TravelRequestResponseDto } from './dto/travel-request-response.dto';
 import { TravelRequestDocument } from './schemas/travel-request.schema';
 import { TravelRequestRepository } from './travel-request.repository';
 import { TravelRequestService } from './travel-request.service';
@@ -10,6 +12,7 @@ describe('TravelRequestService', () => {
   let service: TravelRequestService;
   let repository: jest.Mocked<TravelRequestRepository>;
   let policyCalculationService: jest.Mocked<PolicyCalculationService>;
+  let approvalService: jest.Mocked<ApprovalService>;
 
   const tenantId = '507f1f77bcf86cd799439011';
   const userId = '507f1f77bcf86cd799439012';
@@ -45,6 +48,11 @@ describe('TravelRequestService', () => {
       status: TravelRequestStatus.DRAFT,
       submittedAt: null,
       cancelledAt: null,
+      approvalSteps: [],
+      currentStepIndex: -1,
+      approvedAt: null,
+      rejectedAt: null,
+      rejectionComment: '',
       createdAt: new Date(),
       updatedAt: new Date(),
       ...overrides,
@@ -62,7 +70,16 @@ describe('TravelRequestService', () => {
       calculate: jest.fn(),
     } as unknown as jest.Mocked<PolicyCalculationService>;
 
-    service = new TravelRequestService(repository, policyCalculationService);
+    approvalService = {
+      processSubmit: jest.fn(),
+      recordCancel: jest.fn(),
+    } as unknown as jest.Mocked<ApprovalService>;
+
+    service = new TravelRequestService(
+      repository,
+      policyCalculationService,
+      approvalService,
+    );
   });
 
   it('should calculate inclusive travel days', () => {
@@ -127,19 +144,18 @@ describe('TravelRequestService', () => {
     });
   });
 
-  it('should submit a draft travel request', async () => {
+  it('should submit a draft travel request via approval workflow', async () => {
     repository.findByIdInTenant.mockResolvedValue(baseRequest());
-    repository.updateInTenant.mockResolvedValue(
-      baseRequest({
-        status: TravelRequestStatus.SUBMITTED,
-        submittedAt: new Date('2026-06-10'),
-      }),
-    );
+    approvalService.processSubmit.mockResolvedValue({
+      id: requestId,
+      status: TravelRequestStatus.PENDING_APPROVAL,
+      submittedAt: new Date('2026-06-10'),
+    } as TravelRequestResponseDto);
 
     const result = await service.submit(actor, requestId);
 
-    expect(result.status).toBe(TravelRequestStatus.SUBMITTED);
-    expect(result.submittedAt).toBeTruthy();
+    expect(approvalService.processSubmit).toHaveBeenCalled();
+    expect(result.status).toBe(TravelRequestStatus.PENDING_APPROVAL);
   });
 
   it('should forbid employees from accessing other users requests', async () => {

@@ -1,5 +1,7 @@
 export enum TravelRequestStatus {
   DRAFT = 'draft',
-  SUBMITTED = 'submitted',
+  PENDING_APPROVAL = 'pending_approval',
+  APPROVED = 'approved',
+  REJECTED = 'rejected',
   CANCELLED = 'cancelled',
 }

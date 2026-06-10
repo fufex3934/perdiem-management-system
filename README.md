@@ -91,11 +91,29 @@ pnpm --filter @perdiem/backend test:e2e
 - [x] Next.js frontend with API client
 - [x] Unit & integration tests
 
+## Phase 5 — Approval Workflow (Complete)
+
+- [x] Multi-step approval chain (employee: manager → admin; manager: admin only)
+- [x] Approve/reject with optional comments and role-based step authorization
+- [x] Audit trail logging for submit, approve, reject, and cancel actions
+- [x] Pending approvals queue for managers and tenant admins
+- [x] Frontend approvals page + audit trail on travel requests
+- [x] Unit and E2E tests
+
+### Approval API
+
+| Method | Endpoint | Permission | Description |
+|--------|----------|------------|-------------|
+| GET | `/api/v1/approvals/pending` | `approvals:read` | List requests awaiting actor's approval |
+| POST | `/api/v1/approvals/travel-requests/:id/approve` | `approvals:approve` | Approve current workflow step |
+| POST | `/api/v1/approvals/travel-requests/:id/reject` | `approvals:reject` | Reject at current step |
+| GET | `/api/v1/approvals/travel-requests/:id/audit-trail` | `travel_requests:read` | Get audit trail (owner or read_all) |
+
 ## Phase 4 — Travel Request (Complete)
 
 - [x] Travel request model with per diem calculation snapshot
 - [x] Auto per diem calculation via policy engine on create/update
-- [x] Status management: draft, submitted, cancelled
+- [x] Status management: draft, pending_approval, approved, rejected, cancelled
 - [x] RBAC with tenant-scoped access (employees own, managers/admins all)
 - [x] Frontend travel requests page
 - [x] Unit and E2E tests
@@ -108,8 +126,8 @@ pnpm --filter @perdiem/backend test:e2e
 | GET | `/api/v1/travel-requests` | `travel_requests:read` | List requests (scoped by role) |
 | GET | `/api/v1/travel-requests/:id` | `travel_requests:read` | Get request by ID |
 | PATCH | `/api/v1/travel-requests/:id` | `travel_requests:write` | Update draft (recalculates per diem) |
-| POST | `/api/v1/travel-requests/:id/submit` | `travel_requests:submit` | Submit draft for approval |
-| POST | `/api/v1/travel-requests/:id/cancel` | `travel_requests:cancel` | Cancel draft or submitted request |
+| POST | `/api/v1/travel-requests/:id/submit` | `travel_requests:submit` | Submit draft into approval workflow |
+| POST | `/api/v1/travel-requests/:id/cancel` | `travel_requests:cancel` | Cancel draft or pending request |
 
 ## Phase 3 — Policy Engine (Complete)
 
@@ -183,7 +201,7 @@ pnpm --filter @perdiem/backend test:e2e
 | 2 | User Management + RBAC | ✅ Complete |
 | 3 | Policy Engine | ✅ Complete |
 | 4 | Travel Request | ✅ Complete |
-| 5 | Approval Workflow | Pending |
+| 5 | Approval Workflow | ✅ Complete |
 | 6 | Finance | Pending |
 | 7 | Notifications | Pending |
 | 8 | Analytics | Pending |

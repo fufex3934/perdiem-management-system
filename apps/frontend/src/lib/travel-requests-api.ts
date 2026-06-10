@@ -1,5 +1,14 @@
 import { apiClient } from './api-client';
 
+export interface ApprovalStep {
+  step: number;
+  requiredRole: string;
+  status: string;
+  actedBy: string | null;
+  actedAt: string | null;
+  comment: string;
+}
+
 export interface TravelRequest {
   id: string;
   tenantId: string;
@@ -21,6 +30,11 @@ export interface TravelRequest {
   status: string;
   submittedAt: string | null;
   cancelledAt: string | null;
+  approvalSteps: ApprovalStep[];
+  currentStepIndex: number;
+  approvedAt: string | null;
+  rejectedAt: string | null;
+  rejectionComment: string;
   createdAt: string;
   updatedAt: string;
 }

@@ -38,6 +38,21 @@ describe('Role Permissions', () => {
     expect(permissions).toContain(Permission.TRAVEL_REQUESTS_READ_ALL);
   });
 
+  it('should grant approval permissions to manager but not employee', () => {
+    const managerPermissions = getPermissionsForRole(UserRole.MANAGER);
+    const employeePermissions = getPermissionsForRole(UserRole.EMPLOYEE);
+    expect(managerPermissions).toContain(Permission.APPROVALS_APPROVE);
+    expect(employeePermissions).not.toContain(Permission.APPROVALS_APPROVE);
+  });
+
+  it('should grant approval permissions to manager but not employee', () => {
+    const managerPermissions = getPermissionsForRole(UserRole.MANAGER);
+    const employeePermissions = getPermissionsForRole(UserRole.EMPLOYEE);
+
+    expect(managerPermissions).toContain(Permission.APPROVALS_APPROVE);
+    expect(employeePermissions).not.toContain(Permission.APPROVALS_APPROVE);
+  });
+
   it('should evaluate permission checks correctly', () => {
     expect(roleHasPermission(UserRole.MANAGER, Permission.USERS_READ)).toBe(true);
     expect(roleHasPermission(UserRole.EMPLOYEE, Permission.USERS_READ)).toBe(false);

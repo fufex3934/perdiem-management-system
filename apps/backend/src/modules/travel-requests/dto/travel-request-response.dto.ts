@@ -1,5 +1,6 @@
 import { TravelRequestStatus } from '@/common/enums/travel-request-status.enum';
 import { UserRole } from '@/common/enums/user-role.enum';
+import { ApprovalStepResponseDto } from './approval-audit-log-response.dto';
 import { TravelRequestDocument } from '../schemas/travel-request.schema';
 
 export class TravelRequestResponseDto {
@@ -23,6 +24,11 @@ export class TravelRequestResponseDto {
   status: TravelRequestStatus;
   submittedAt: Date | null;
   cancelledAt: Date | null;
+  approvalSteps: ApprovalStepResponseDto[];
+  currentStepIndex: number;
+  approvedAt: Date | null;
+  rejectedAt: Date | null;
+  rejectionComment: string;
   createdAt: Date;
   updatedAt: Date;
 
@@ -48,6 +54,13 @@ export class TravelRequestResponseDto {
       status: request.status,
       submittedAt: request.submittedAt,
       cancelledAt: request.cancelledAt,
+      approvalSteps: request.approvalSteps.map((step) =>
+        ApprovalStepResponseDto.fromStep(step),
+      ),
+      currentStepIndex: request.currentStepIndex,
+      approvedAt: request.approvedAt,
+      rejectedAt: request.rejectedAt,
+      rejectionComment: request.rejectionComment,
       createdAt: request.createdAt ?? new Date(),
       updatedAt: request.updatedAt ?? new Date(),
     };

@@ -13,4 +13,7 @@ export enum Permission {
   TRAVEL_REQUESTS_WRITE = 'travel_requests:write',
   TRAVEL_REQUESTS_SUBMIT = 'travel_requests:submit',
   TRAVEL_REQUESTS_CANCEL = 'travel_requests:cancel',
+  APPROVALS_READ = 'approvals:read',
+  APPROVALS_APPROVE = 'approvals:approve',
+  APPROVALS_REJECT = 'approvals:reject',
 }

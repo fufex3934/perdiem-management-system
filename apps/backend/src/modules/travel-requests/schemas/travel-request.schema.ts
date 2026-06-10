@@ -1,9 +1,37 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
+import { ApprovalStepStatus } from '@/common/enums/approval-step-status.enum';
 import { TravelRequestStatus } from '@/common/enums/travel-request-status.enum';
 import { UserRole } from '@/common/enums/user-role.enum';
 
 export type TravelRequestDocument = HydratedDocument<TravelRequest>;
+
+@Schema({ _id: false })
+export class ApprovalStep {
+  @Prop({ required: true })
+  step: number;
+
+  @Prop({ type: String, enum: UserRole, required: true })
+  requiredRole: UserRole;
+
+  @Prop({
+    type: String,
+    enum: ApprovalStepStatus,
+    default: ApprovalStepStatus.PENDING,
+  })
+  status: ApprovalStepStatus;
+
+  @Prop({ type: Types.ObjectId, default: null })
+  actedBy: Types.ObjectId | null;
+
+  @Prop({ type: Date, default: null })
+  actedAt: Date | null;
+
+  @Prop({ trim: true, default: '' })
+  comment: string;
+}
+
+export const ApprovalStepSchema = SchemaFactory.createForClass(ApprovalStep);
 
 @Schema({ timestamps: true, collection: 'travel_requests' })
 export class TravelRequest {
@@ -68,6 +96,21 @@ export class TravelRequest {
 
   @Prop({ type: Date, default: null })
   cancelledAt: Date | null;
+
+  @Prop({ type: [ApprovalStepSchema], default: [] })
+  approvalSteps: ApprovalStep[];
+
+  @Prop({ default: -1 })
+  currentStepIndex: number;
+
+  @Prop({ type: Date, default: null })
+  approvedAt: Date | null;
+
+  @Prop({ type: Date, default: null })
+  rejectedAt: Date | null;
+
+  @Prop({ trim: true, default: '' })
+  rejectionComment: string;
 
   @Prop({ default: false })
   isDeleted: boolean;

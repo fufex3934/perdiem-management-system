@@ -13,6 +13,9 @@ export const Permission = {
   TRAVEL_REQUESTS_WRITE: 'travel_requests:write',
   TRAVEL_REQUESTS_SUBMIT: 'travel_requests:submit',
   TRAVEL_REQUESTS_CANCEL: 'travel_requests:cancel',
+  APPROVALS_READ: 'approvals:read',
+  APPROVALS_APPROVE: 'approvals:approve',
+  APPROVALS_REJECT: 'approvals:reject',
 } as const;
 
 export type Permission = (typeof Permission)[keyof typeof Permission];
@@ -39,6 +42,9 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     Permission.TRAVEL_REQUESTS_WRITE,
     Permission.TRAVEL_REQUESTS_SUBMIT,
     Permission.TRAVEL_REQUESTS_CANCEL,
+    Permission.APPROVALS_READ,
+    Permission.APPROVALS_APPROVE,
+    Permission.APPROVALS_REJECT,
   ],
   [UserRole.EMPLOYEE]: [
     Permission.POLICIES_READ,
@@ -80,4 +86,8 @@ export function canManageTravelRequests(role: string): boolean {
 
 export function canReadAllTravelRequests(role: string): boolean {
   return hasPermission(role, Permission.TRAVEL_REQUESTS_READ_ALL);
+}
+
+export function canManageApprovals(role: string): boolean {
+  return hasPermission(role, Permission.APPROVALS_APPROVE);
 }

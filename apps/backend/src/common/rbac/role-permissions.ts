@@ -17,6 +17,9 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     Permission.TRAVEL_REQUESTS_WRITE,
     Permission.TRAVEL_REQUESTS_SUBMIT,
     Permission.TRAVEL_REQUESTS_CANCEL,
+    Permission.APPROVALS_READ,
+    Permission.APPROVALS_APPROVE,
+    Permission.APPROVALS_REJECT,
   ],
   [UserRole.MANAGER]: [
     Permission.USERS_READ,
@@ -30,6 +33,9 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     Permission.TRAVEL_REQUESTS_WRITE,
     Permission.TRAVEL_REQUESTS_SUBMIT,
     Permission.TRAVEL_REQUESTS_CANCEL,
+    Permission.APPROVALS_READ,
+    Permission.APPROVALS_APPROVE,
+    Permission.APPROVALS_REJECT,
   ],
   [UserRole.EMPLOYEE]: [
     Permission.POLICIES_READ,
