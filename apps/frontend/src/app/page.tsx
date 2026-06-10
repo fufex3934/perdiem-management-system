@@ -24,7 +24,7 @@ export default async function HomePage() {
       <div className="mx-auto flex min-h-screen max-w-5xl flex-col items-center justify-center px-6 py-16">
         <div className="w-full max-w-2xl rounded-2xl border bg-white p-10 shadow-sm">
           <div className="mb-6 inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700">
-            Phase 1 — Auth + Tenant
+            Phase 2 — User Management + RBAC
           </div>
 
           <h1 className="text-4xl font-bold tracking-tight text-slate-900">
@@ -74,17 +74,23 @@ export default async function HomePage() {
             >
               Dashboard
             </Link>
+            <Link
+              href="/users"
+              className="rounded-lg border border-slate-200 px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              User management
+            </Link>
           </div>
 
           <div className="mt-8 rounded-lg border border-dashed border-slate-200 bg-slate-50 p-6">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-              Phase 1 Complete
+              Phase 2 Complete
             </h2>
             <ul className="mt-3 space-y-2 text-sm text-slate-600">
-              <li>✓ Tenant + User models with MongoDB</li>
-              <li>✓ JWT access + refresh token auth</li>
-              <li>✓ Tenant isolation guards</li>
-              <li>✓ Login, register, and dashboard UI</li>
+              <li>✓ Permission-based RBAC with role guards</li>
+              <li>✓ User CRUD with tenant isolation</li>
+              <li>✓ Invite users + accept-invite flow</li>
+              <li>✓ Admin user management UI</li>
             </ul>
           </div>
         </div>

@@ -28,11 +28,17 @@ export class User {
   @Prop({ type: String, enum: UserStatus, default: UserStatus.ACTIVE })
   status: UserStatus;
 
+  @Prop({ type: Types.ObjectId, default: null })
+  invitedBy: Types.ObjectId | null;
+
   @Prop({ default: false })
   isDeleted: boolean;
 
   @Prop({ type: Date, default: null })
   deletedAt: Date | null;
+
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

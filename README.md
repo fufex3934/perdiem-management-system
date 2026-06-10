@@ -91,6 +91,29 @@ pnpm --filter @perdiem/backend test:e2e
 - [x] Next.js frontend with API client
 - [x] Unit & integration tests
 
+## Phase 2 — User Management + RBAC (Complete)
+
+- [x] Permission-based RBAC (`RolesGuard`, `PermissionsGuard`)
+- [x] Roles: `tenant_admin`, `manager`, `employee`
+- [x] User CRUD API with tenant isolation
+- [x] Invite users flow with `PENDING` status + accept invite
+- [x] Last-admin protection and self-modification guards
+- [x] Frontend user management + invite accept pages
+- [x] Unit and E2E tests
+
+### User Management API
+
+| Method | Endpoint | Permission | Description |
+|--------|----------|------------|-------------|
+| GET | `/api/v1/users` | `users:read` | List tenant users |
+| GET | `/api/v1/users/:id` | `users:read` | Get user by ID |
+| PATCH | `/api/v1/users/:id` | `users:write` | Update user |
+| DELETE | `/api/v1/users/:id` | `users:delete` | Soft delete user |
+| GET | `/api/v1/users/invites` | `users:invite` | List pending invites |
+| POST | `/api/v1/users/invites` | `users:invite` | Create invite |
+| DELETE | `/api/v1/users/invites/:id` | `users:invite` | Revoke invite |
+| POST | `/api/v1/auth/accept-invite` | Public | Accept invite + set password |
+
 ## Phase 1 — Auth + Tenant (Complete)
 
 - [x] MongoDB/Mongoose integration
@@ -117,7 +140,7 @@ pnpm --filter @perdiem/backend test:e2e
 |-------|---------|--------|
 | 0 | Foundation | ✅ Complete |
 | 1 | Auth + Tenant | ✅ Complete |
-| 2 | User Management + RBAC | Pending |
+| 2 | User Management + RBAC | ✅ Complete |
 | 3 | Policy Engine | Pending |
 | 4 | Travel Request | Pending |
 | 5 | Approval Workflow | Pending |

@@ -102,6 +102,16 @@ export class UserService {
   }
 
   private ensureUserActive(user: UserDocument): void {
+    if (user.status === UserStatus.PENDING) {
+      throw new BusinessException(
+        {
+          code: ErrorCodes.USER_INACTIVE,
+          message: 'Please accept your invite before signing in',
+        },
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
     if (user.status !== UserStatus.ACTIVE) {
       throw new BusinessException(
         {

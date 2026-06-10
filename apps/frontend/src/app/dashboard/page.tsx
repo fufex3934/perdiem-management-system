@@ -1,12 +1,13 @@
 'use client';
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { user, tenantId, isLoading, isAuthenticated, logout } = useAuth();
+  const { user, tenantId, isLoading, isAuthenticated, canManageUsers, logout } = useAuth();
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -42,12 +43,23 @@ export default function DashboardPage() {
       <div className="mx-auto max-w-5xl px-6 py-10">
         <div className="rounded-2xl border bg-white p-8 shadow-sm">
           <p className="text-sm font-medium uppercase tracking-wide text-blue-600">
-            Phase 1 — Auth + Tenant
+            Phase 2 — User Management + RBAC
           </p>
           <h2 className="mt-2 text-2xl font-bold text-slate-900">
             Welcome, {user.firstName} {user.lastName}
           </h2>
           <p className="mt-2 text-slate-600">{user.email}</p>
+
+          {canManageUsers && (
+            <div className="mt-6">
+              <Link
+                href="/users"
+                className="inline-flex rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+              >
+                Manage users
+              </Link>
+            </div>
+          )}
 
           <dl className="mt-8 grid gap-4 sm:grid-cols-2">
             <div className="rounded-xl border p-4">

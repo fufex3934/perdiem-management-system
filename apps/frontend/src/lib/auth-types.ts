@@ -5,6 +5,10 @@ export interface AuthUser {
   firstName: string;
   lastName: string;
   role: string;
+  status?: string;
+  invitedBy?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface AuthTokens {

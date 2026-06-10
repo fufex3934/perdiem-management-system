@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -31,10 +31,10 @@ import { JwtAccessStrategy } from './strategies/jwt-access.strategy';
       { name: RefreshToken.name, schema: RefreshTokenSchema },
     ]),
     TenantModule,
-    UserModule,
+    forwardRef(() => UserModule),
   ],
   controllers: [AuthController],
   providers: [AuthService, RefreshTokenRepository, JwtAccessStrategy],
-  exports: [AuthService],
+  exports: [AuthService, RefreshTokenRepository],
 })
 export class AuthModule {}
