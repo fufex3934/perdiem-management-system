@@ -98,6 +98,10 @@ export function canManagePolicies(role: string): boolean {
   return hasPermission(role, Permission.POLICIES_WRITE);
 }
 
+export function canDeletePolicies(role: string): boolean {
+  return hasPermission(role, Permission.POLICIES_DELETE);
+}
+
 export function canCalculatePerDiem(role: string): boolean {
   return hasPermission(role, Permission.POLICIES_CALCULATE);
 }

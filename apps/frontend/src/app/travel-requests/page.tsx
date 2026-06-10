@@ -1,69 +1,59 @@
 'use client';
 
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { MapPin } from 'lucide-react';
 import { FormEvent, useCallback, useEffect, useState } from 'react';
-import { useAuth } from '@/lib/auth-context';
-import * as approvalsApi from '@/lib/approvals-api';
-import type { ApprovalAuditEntry } from '@/lib/approvals-api';
+import { AppShell } from '@/components/layout/app-shell';
+import { ApprovalAuditDialog } from '@/components/shared/approval-audit-dialog';
+import { EmptyState } from '@/components/shared/empty-state';
+import { ErrorAlert } from '@/components/shared/error-alert';
+import { PageHeader } from '@/components/shared/page-header';
+import { PageLoading } from '@/components/shared/page-loading';
+import { StatusBadge } from '@/components/shared/status-badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { useRequireAuth } from '@/hooks/use-require-auth';
 import type { TravelRequest } from '@/lib/travel-requests-api';
 import * as travelRequestsApi from '@/lib/travel-requests-api';
 
-const STATUS_STYLES: Record<string, string> = {
-  draft: 'bg-slate-100 text-slate-700',
-  pending_approval: 'bg-amber-100 text-amber-800',
-  approved: 'bg-emerald-100 text-emerald-800',
-  rejected: 'bg-red-100 text-red-800',
-  cancelled: 'bg-red-100 text-red-800',
-};
-
 export default function TravelRequestsPage() {
-  const router = useRouter();
-  const {
-    user,
-    accessToken,
-    tenantId,
-    isLoading,
-    isAuthenticated,
-    canManageTravelRequests,
-    canReadAllTravelRequests,
-    logout,
-  } = useAuth();
-
+  const auth = useRequireAuth();
   const [requests, setRequests] = useState<TravelRequest[]>([]);
-  const [auditTrail, setAuditTrail] = useState<ApprovalAuditEntry[] | null>(null);
-  const [auditRequestId, setAuditRequestId] = useState<string | null>(null);
+  const [auditRequest, setAuditRequest] = useState<TravelRequest | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const loadRequests = useCallback(async () => {
-    if (!accessToken || !tenantId) return;
-    const result = await travelRequestsApi.listTravelRequests(accessToken, tenantId);
+    if (!auth.accessToken || !auth.tenantId) return;
+    const result = await travelRequestsApi.listTravelRequests(auth.accessToken, auth.tenantId);
     setRequests(result.items);
-  }, [accessToken, tenantId]);
+    setLoading(false);
+  }, [auth.accessToken, auth.tenantId]);
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.replace('/login');
-      return;
-    }
-
-    if (isAuthenticated && accessToken && tenantId) {
+    if (auth.ready) {
       loadRequests().catch((err: Error) => setError(err.message));
     }
-  }, [isLoading, isAuthenticated, accessToken, tenantId, router, loadRequests]);
+  }, [auth.ready, loadRequests]);
 
   async function handleCreate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!accessToken || !tenantId || !canManageTravelRequests) return;
-
+    if (!auth.accessToken || !auth.tenantId || !auth.canManageTravelRequests) return;
     setError(null);
     setIsSubmitting(true);
-
     const formData = new FormData(event.currentTarget);
-
     try {
-      await travelRequestsApi.createTravelRequest(accessToken, tenantId, {
+      await travelRequestsApi.createTravelRequest(auth.accessToken, auth.tenantId, {
         title: String(formData.get('title')),
         purpose: String(formData.get('purpose') || ''),
         destinationCountryCode: String(formData.get('destinationCountryCode')).toUpperCase(),
@@ -80,252 +70,149 @@ export default function TravelRequestsPage() {
     }
   }
 
-  async function handleSubmit(requestId: string) {
-    if (!accessToken || !tenantId) return;
-    await travelRequestsApi.submitTravelRequest(accessToken, tenantId, requestId);
-    await loadRequests();
-  }
-
-  async function handleCancel(requestId: string) {
-    if (!accessToken || !tenantId) return;
-    await travelRequestsApi.cancelTravelRequest(accessToken, tenantId, requestId);
-    await loadRequests();
-  }
-
-  async function handleViewAudit(requestId: string) {
-    if (!accessToken || !tenantId) return;
-    setError(null);
-    try {
-      const trail = await approvalsApi.getAuditTrail(accessToken, tenantId, requestId);
-      setAuditTrail(trail);
-      setAuditRequestId(requestId);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load audit trail');
-    }
-  }
-
-  if (isLoading || !user) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-50">
-        <p className="text-slate-600">Loading...</p>
-      </main>
-    );
-  }
+  if (!auth.ready || !auth.user) return <PageLoading />;
 
   return (
-    <main className="min-h-screen bg-slate-50">
-      <header className="border-b bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <div>
-            <h1 className="text-lg font-semibold text-slate-900">Travel Requests</h1>
-            <p className="text-sm text-slate-500">
-              {canReadAllTravelRequests
-                ? 'All tenant travel requests'
-                : 'Your travel requests with auto per diem calculation'}
-            </p>
-          </div>
-          <div className="flex gap-3">
-            <Link href="/dashboard" className="text-sm text-blue-600 hover:underline">
-              Dashboard
-            </Link>
-            <button
-              onClick={() => logout()}
-              className="rounded-lg border px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
-            >
-              Sign out
-            </button>
-          </div>
-        </div>
-      </header>
+    <AppShell>
+      <div className="space-y-6">
+        <PageHeader
+          title="Travel requests"
+          description={
+            auth.canReadAllTravelRequests
+              ? 'All tenant travel requests with auto per diem calculation'
+              : 'Your travel requests with auto per diem calculation'
+          }
+        />
 
-      <div className="mx-auto grid max-w-6xl gap-6 px-6 py-8">
-        {canManageTravelRequests && (
-          <section className="rounded-2xl border bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-slate-900">New travel request</h2>
-            <p className="mt-1 text-sm text-slate-500">
-              Per diem is calculated automatically from matching policies.
-            </p>
-            <form className="mt-4 grid gap-3 sm:grid-cols-2" onSubmit={handleCreate}>
-              <input
-                name="title"
-                placeholder="Trip title"
-                required
-                className="rounded-lg border px-3 py-2 text-sm sm:col-span-2"
-              />
-              <input
-                name="purpose"
-                placeholder="Purpose (optional)"
-                className="rounded-lg border px-3 py-2 text-sm sm:col-span-2"
-              />
-              <input
-                name="destinationCountryCode"
-                placeholder="Country (US)"
-                required
-                maxLength={2}
-                className="rounded-lg border px-3 py-2 text-sm uppercase"
-              />
-              <input
-                name="destinationCity"
-                placeholder="City (optional)"
-                className="rounded-lg border px-3 py-2 text-sm"
-              />
-              <input
-                name="startDate"
-                type="date"
-                required
-                className="rounded-lg border px-3 py-2 text-sm"
-              />
-              <input
-                name="endDate"
-                type="date"
-                required
-                className="rounded-lg border px-3 py-2 text-sm"
-              />
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-70 sm:col-span-2"
-              >
-                {isSubmitting ? 'Creating...' : 'Create draft'}
-              </button>
-            </form>
-          </section>
+        {error && <ErrorAlert message={error} />}
+
+        {auth.canManageTravelRequests && (
+          <Card>
+            <CardHeader>
+              <CardTitle>New travel request</CardTitle>
+              <CardDescription>Per diem is calculated from matching policies</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form className="grid gap-4 sm:grid-cols-2" onSubmit={handleCreate}>
+                <div className="space-y-2 sm:col-span-2">
+                  <Label htmlFor="title">Trip title</Label>
+                  <Input id="title" name="title" placeholder="Client visit" required />
+                </div>
+                <div className="space-y-2 sm:col-span-2">
+                  <Label htmlFor="purpose">Purpose</Label>
+                  <Input id="purpose" name="purpose" placeholder="Optional" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="destinationCountryCode">Country</Label>
+                  <Input id="destinationCountryCode" name="destinationCountryCode" placeholder="US" maxLength={2} className="uppercase" required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="destinationCity">City</Label>
+                  <Input id="destinationCity" name="destinationCity" placeholder="Optional" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="startDate">Start date</Label>
+                  <Input id="startDate" name="startDate" type="date" required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="endDate">End date</Label>
+                  <Input id="endDate" name="endDate" type="date" required />
+                </div>
+                <div className="sm:col-span-2">
+                  <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? 'Creating...' : 'Create draft'}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
         )}
 
-        <section className="rounded-2xl border bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900">Requests</h2>
-          <div className="mt-4 overflow-x-auto">
-            <table className="min-w-full text-left text-sm">
-              <thead className="border-b text-slate-500">
-                <tr>
-                  <th className="px-3 py-2">Title</th>
-                  <th className="px-3 py-2">Destination</th>
-                  <th className="px-3 py-2">Dates</th>
-                  <th className="px-3 py-2">Per diem</th>
-                  <th className="px-3 py-2">Status</th>
-                  <th className="px-3 py-2">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {requests.length === 0 && (
-                  <tr>
-                    <td colSpan={6} className="px-3 py-4 text-slate-500">
-                      No travel requests yet
-                    </td>
-                  </tr>
-                )}
-                {requests.map((request) => {
-                  const isOwner = request.userId === user.id;
-                  const canAct = isOwner || canReadAllTravelRequests;
-
-                  return (
-                    <tr key={request.id} className="border-b last:border-0">
-                      <td className="px-3 py-2 font-medium">{request.title}</td>
-                      <td className="px-3 py-2">
-                        {request.destinationCity
-                          ? `${request.destinationCity}, `
-                          : ''}
-                        {request.destinationCountryCode}
-                      </td>
-                      <td className="px-3 py-2">
-                        {request.startDate.slice(0, 10)} → {request.endDate.slice(0, 10)}
-                        <span className="ml-1 text-slate-500">({request.days}d)</span>
-                      </td>
-                      <td className="px-3 py-2">
-                        {request.totalAmount} {request.currency}
-                        <span className="block text-xs text-slate-500">{request.policyName}</span>
-                      </td>
-                      <td className="px-3 py-2">
-                        <span
-                          className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                            STATUS_STYLES[request.status] ?? 'bg-slate-100 text-slate-700'
-                          }`}
-                        >
-                          {request.status}
-                        </span>
-                      </td>
-                      <td className="px-3 py-2">
-                        <div className="flex gap-2">
-                          {canAct && request.status === 'draft' && (
-                            <button
-                              onClick={() => handleSubmit(request.id)}
-                              className="text-blue-600 hover:underline"
-                            >
-                              Submit
-                            </button>
-                          )}
-                          {canAct &&
-                            (request.status === 'draft' ||
-                              request.status === 'pending_approval') && (
-                              <button
-                                onClick={() => handleCancel(request.id)}
-                                className="text-red-600 hover:underline"
-                              >
+        <Card>
+          <CardHeader>
+            <CardTitle>All requests</CardTitle>
+            <CardDescription>{requests.length} total</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <PageLoading />
+            ) : requests.length === 0 ? (
+              <EmptyState
+                icon={MapPin}
+                title="No travel requests"
+                description="Create a draft to start the approval workflow."
+              />
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Title</TableHead>
+                    <TableHead>Destination</TableHead>
+                    <TableHead>Dates</TableHead>
+                    <TableHead>Per diem</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {requests.map((request) => {
+                    const isOwner = request.userId === auth.user!.id;
+                    const canAct = isOwner || auth.canReadAllTravelRequests;
+                    return (
+                      <TableRow key={request.id}>
+                        <TableCell className="font-medium">{request.title}</TableCell>
+                        <TableCell>
+                          {request.destinationCity ? `${request.destinationCity}, ` : ''}
+                          {request.destinationCountryCode}
+                        </TableCell>
+                        <TableCell>
+                          {request.startDate.slice(0, 10)} → {request.endDate.slice(0, 10)}
+                          <span className="ml-1 text-muted-foreground">({request.days}d)</span>
+                        </TableCell>
+                        <TableCell>
+                          {request.totalAmount} {request.currency}
+                          <span className="block text-xs text-muted-foreground">{request.policyName}</span>
+                        </TableCell>
+                        <TableCell>
+                          <StatusBadge status={request.status} />
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            {canAct && request.status === 'draft' && (
+                              <Button variant="ghost" size="sm" onClick={() => travelRequestsApi.submitTravelRequest(auth.accessToken!, auth.tenantId!, request.id).then(loadRequests)}>
+                                Submit
+                              </Button>
+                            )}
+                            {canAct && ['draft', 'pending_approval'].includes(request.status) && (
+                              <Button variant="ghost" size="sm" className="text-destructive" onClick={() => travelRequestsApi.cancelTravelRequest(auth.accessToken!, auth.tenantId!, request.id).then(loadRequests)}>
                                 Cancel
-                              </button>
+                              </Button>
                             )}
-                          {(isOwner || canReadAllTravelRequests) &&
-                            request.status !== 'draft' && (
-                              <button
-                                onClick={() => handleViewAudit(request.id)}
-                                className="text-slate-600 hover:underline"
-                              >
+                            {(isOwner || auth.canReadAllTravelRequests) && request.status !== 'draft' && (
+                              <Button variant="ghost" size="sm" onClick={() => setAuditRequest(request)}>
                                 Audit
-                              </button>
+                              </Button>
                             )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </section>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
 
-        {auditTrail && auditRequestId && (
-          <section className="rounded-2xl border bg-white p-6 shadow-sm">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-slate-900">Audit trail</h2>
-              <button
-                onClick={() => {
-                  setAuditTrail(null);
-                  setAuditRequestId(null);
-                }}
-                className="text-sm text-slate-500 hover:underline"
-              >
-                Close
-              </button>
-            </div>
-            <ol className="mt-4 space-y-3">
-              {auditTrail.map((entry) => (
-                <li
-                  key={entry.id}
-                  className="rounded-lg border border-slate-100 bg-slate-50 px-4 py-3 text-sm"
-                >
-                  <span className="font-medium capitalize text-slate-900">{entry.action}</span>
-                  <span className="text-slate-500">
-                    {' '}
-                    · {entry.previousStatus} → {entry.newStatus}
-                  </span>
-                  {entry.comment && (
-                    <p className="mt-1 text-slate-600">&ldquo;{entry.comment}&rdquo;</p>
-                  )}
-                  <p className="mt-1 text-xs text-slate-400">
-                    {new Date(entry.createdAt).toLocaleString()} · {entry.actorRole}
-                  </p>
-                </li>
-              ))}
-            </ol>
-          </section>
-        )}
-
-        {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-            {error}
-          </div>
-        )}
+        <ApprovalAuditDialog
+          open={auditRequest !== null}
+          onOpenChange={(open) => !open && setAuditRequest(null)}
+          requestId={auditRequest?.id ?? null}
+          requestTitle={auditRequest?.title}
+          accessToken={auth.accessToken!}
+          tenantId={auth.tenantId!}
+        />
       </div>
-    </main>
+    </AppShell>
   );
 }

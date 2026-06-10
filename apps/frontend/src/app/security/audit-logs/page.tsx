@@ -1,9 +1,24 @@
 'use client';
 
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { Shield } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
-import { useAuth } from '@/lib/auth-context';
+import { AppShell } from '@/components/layout/app-shell';
+import { EmptyState } from '@/components/shared/empty-state';
+import { ErrorAlert } from '@/components/shared/error-alert';
+import { PageHeader } from '@/components/shared/page-header';
+import { PageLoading } from '@/components/shared/page-loading';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select } from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { useRequireAuth } from '@/hooks/use-require-auth';
 import type { SecurityAuditLog } from '@/lib/security-api';
 import * as securityApi from '@/lib/security-api';
 
@@ -23,177 +38,119 @@ const ACTION_LABELS: Record<string, string> = {
 };
 
 export default function SecurityAuditLogsPage() {
-  const router = useRouter();
-  const {
-    user,
-    accessToken,
-    tenantId,
-    isLoading,
-    isAuthenticated,
-    canViewSecurityAudit,
-    logout,
-  } = useAuth();
-
+  const auth = useRequireAuth({ check: (a) => a.canViewSecurityAudit });
   const [logs, setLogs] = useState<SecurityAuditLog[]>([]);
   const [total, setTotal] = useState(0);
   const [actionFilter, setActionFilter] = useState('');
   const [successFilter, setSuccessFilter] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const loadLogs = useCallback(async () => {
-    if (!accessToken || !tenantId) return;
+    if (!auth.accessToken || !auth.tenantId) return;
 
-    const result = await securityApi.listAuditLogs(accessToken, tenantId, {
+    const result = await securityApi.listAuditLogs(auth.accessToken, auth.tenantId, {
       action: actionFilter || undefined,
-      success:
-        successFilter === ''
-          ? undefined
-          : successFilter === 'true',
+      success: successFilter === '' ? undefined : successFilter === 'true',
     });
 
     setLogs(result.items);
     setTotal(result.total);
-  }, [accessToken, tenantId, actionFilter, successFilter]);
+    setLoading(false);
+  }, [auth.accessToken, auth.tenantId, actionFilter, successFilter]);
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.replace('/login');
-      return;
-    }
+    if (auth.ready) loadLogs().catch((err: Error) => setError(err.message));
+  }, [auth.ready, loadLogs]);
 
-    if (!isLoading && isAuthenticated && !canViewSecurityAudit) {
-      router.replace('/dashboard');
-      return;
-    }
-
-    if (isAuthenticated && accessToken && tenantId && canViewSecurityAudit) {
-      loadLogs().catch((err: Error) => setError(err.message));
-    }
-  }, [
-    isLoading,
-    isAuthenticated,
-    canViewSecurityAudit,
-    accessToken,
-    tenantId,
-    router,
-    loadLogs,
-  ]);
-
-  if (isLoading || !user) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-50">
-        <p className="text-slate-600">Loading...</p>
-      </main>
-    );
-  }
+  if (!auth.ready) return <PageLoading />;
 
   return (
-    <main className="min-h-screen bg-slate-50">
-      <header className="border-b bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <div>
-            <h1 className="text-lg font-semibold text-slate-900">Security audit logs</h1>
-            <p className="text-sm text-slate-500">Authentication and sensitive action history</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link
-              href="/dashboard"
-              className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-            >
-              Dashboard
-            </Link>
-            <button
-              onClick={() => logout()}
-              className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-            >
-              Sign out
-            </button>
-          </div>
-        </div>
-      </header>
+    <AppShell>
+      <div className="space-y-6">
+        <PageHeader
+          title="Security audit"
+          description={`${total} events recorded`}
+        />
 
-      <div className="mx-auto max-w-6xl px-6 py-10">
-        {error && (
-          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            {error}
-          </div>
-        )}
+        {error && <ErrorAlert message={error} />}
 
-        <div className="mb-6 flex flex-wrap gap-3">
-          <select
-            value={actionFilter}
-            onChange={(e) => setActionFilter(e.target.value)}
-            className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
-          >
-            <option value="">All actions</option>
-            {Object.entries(ACTION_LABELS).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
-          <select
-            value={successFilter}
-            onChange={(e) => setSuccessFilter(e.target.value)}
-            className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
-          >
-            <option value="">All outcomes</option>
-            <option value="true">Success</option>
-            <option value="false">Failed</option>
-          </select>
-        </div>
-
-        <div className="overflow-hidden rounded-2xl border bg-white shadow-sm">
-          <table className="min-w-full divide-y divide-slate-200 text-sm">
-            <thead className="bg-slate-50">
-              <tr>
-                <th className="px-4 py-3 text-left font-medium text-slate-600">Time</th>
-                <th className="px-4 py-3 text-left font-medium text-slate-600">Action</th>
-                <th className="px-4 py-3 text-left font-medium text-slate-600">Actor</th>
-                <th className="px-4 py-3 text-left font-medium text-slate-600">Outcome</th>
-                <th className="px-4 py-3 text-left font-medium text-slate-600">IP</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {logs.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
-                    No audit logs found
-                  </td>
-                </tr>
-              ) : (
-                logs.map((log) => (
-                  <tr key={log.id}>
-                    <td className="px-4 py-3 text-slate-700">
-                      {new Date(log.createdAt).toLocaleString()}
-                    </td>
-                    <td className="px-4 py-3 text-slate-900">
-                      {ACTION_LABELS[log.action] ?? log.action}
-                    </td>
-                    <td className="px-4 py-3 text-slate-700">
-                      {log.actorEmail ?? log.userId ?? '—'}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`rounded-full px-2 py-1 text-xs font-medium ${
-                          log.success
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : 'bg-red-100 text-red-800'
-                        }`}
-                      >
-                        {log.success ? 'Success' : 'Failed'}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 font-mono text-xs text-slate-600">{log.ip}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        <p className="mt-4 text-sm text-slate-500">{total} total events</p>
+        <Card>
+          <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="h-4 w-4 text-muted-foreground" />
+              Audit log
+            </CardTitle>
+            <div className="flex flex-wrap gap-3">
+              <Select
+                value={actionFilter}
+                onChange={(e) => setActionFilter(e.target.value)}
+                className="w-44"
+              >
+                <option value="">All actions</option>
+                {Object.entries(ACTION_LABELS).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </Select>
+              <Select
+                value={successFilter}
+                onChange={(e) => setSuccessFilter(e.target.value)}
+                className="w-36"
+              >
+                <option value="">All outcomes</option>
+                <option value="true">Success</option>
+                <option value="false">Failed</option>
+              </Select>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <PageLoading />
+            ) : logs.length === 0 ? (
+              <EmptyState
+                icon={Shield}
+                title="No audit logs"
+                description="Security events will appear here as they occur."
+              />
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Time</TableHead>
+                    <TableHead>Action</TableHead>
+                    <TableHead>Actor</TableHead>
+                    <TableHead>Outcome</TableHead>
+                    <TableHead>IP</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {logs.map((log) => (
+                    <TableRow key={log.id}>
+                      <TableCell className="whitespace-nowrap text-muted-foreground">
+                        {new Date(log.createdAt).toLocaleString()}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {ACTION_LABELS[log.action] ?? log.action}
+                      </TableCell>
+                      <TableCell>{log.actorEmail ?? log.userId ?? '—'}</TableCell>
+                      <TableCell>
+                        <Badge variant={log.success ? 'default' : 'destructive'}>
+                          {log.success ? 'Success' : 'Failed'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground">
+                        {log.ip}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
       </div>
-    </main>
+    </AppShell>
   );
 }

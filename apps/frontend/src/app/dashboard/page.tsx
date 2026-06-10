@@ -1,147 +1,194 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
-import { useAuth } from '@/lib/auth-context';
+import {
+  ArrowRight,
+  ClipboardCheck,
+  CreditCard,
+  MapPin,
+  Plane,
+  Wallet,
+} from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { SpendBarChart } from '@/components/charts/spend-bar-chart';
+import { StatusPieChart } from '@/components/charts/status-pie-chart';
+import { TrendLineChart } from '@/components/charts/trend-line-chart';
+import { AppShell } from '@/components/layout/app-shell';
+import { ErrorAlert } from '@/components/shared/error-alert';
+import { PageHeader } from '@/components/shared/page-header';
+import { PageLoading } from '@/components/shared/page-loading';
+import { StatCard } from '@/components/shared/stat-card';
+import { buttonVariants } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useRequireAuth } from '@/hooks/use-require-auth';
+import type { AnalyticsDashboard } from '@/lib/analytics-api';
+import * as analyticsApi from '@/lib/analytics-api';
+
+function formatAmount(value: number): string {
+  return value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
 
 export default function DashboardPage() {
-  const router = useRouter();
-  const {
-    user,
-    tenantId,
-    isLoading,
-    isAuthenticated,
-    canManageUsers,
-    canManagePolicies,
-    canCalculatePerDiem,
-    canManageTravelRequests,
-    canManageApprovals,
-    canViewFinance,
-    canProcessFinance,
-    canViewAnalytics,
-    canViewSecurityAudit,
-    logout,
-  } = useAuth();
+  const auth = useRequireAuth();
+  const [dashboard, setDashboard] = useState<AnalyticsDashboard | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    if (!auth.accessToken || !auth.tenantId || !auth.canViewAnalytics) {
+      setLoading(false);
+      return;
+    }
+    try {
+      const data = await analyticsApi.getDashboard(auth.accessToken, auth.tenantId);
+      setDashboard(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load dashboard');
+    } finally {
+      setLoading(false);
+    }
+  }, [auth.accessToken, auth.tenantId, auth.canViewAnalytics]);
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.replace('/login');
-    }
-  }, [isAuthenticated, isLoading, router]);
+    if (auth.ready) load();
+  }, [auth.ready, load]);
 
-  if (isLoading || !user) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-50">
-        <p className="text-slate-600">Loading...</p>
-      </main>
-    );
-  }
+  if (!auth.ready || !auth.user) return <PageLoading />;
+
+  const statusChartData =
+    dashboard?.travelRequests.byStatus.map((s) => ({
+      name: s.status.replace(/_/g, ' '),
+      value: s.count,
+    })) ?? [];
+
+  const countryChartData =
+    dashboard?.travelRequests.topDestinations.map((c) => ({
+      name: c.countryCode,
+      amount: c.totalAmount,
+    })) ?? [];
+
+  const trendData =
+    dashboard?.payments.byStatus.map((p, i) => ({
+      month: p.status,
+      amount: p.totalAmount,
+    })) ?? [
+      { month: 'Jan', amount: 0 },
+      { month: 'Feb', amount: 0 },
+      { month: 'Mar', amount: 0 },
+    ];
+
+  const quickLinks = [
+    { href: '/travel-requests', label: 'New travel request', icon: MapPin, show: auth.canManageTravelRequests },
+    { href: '/approvals', label: 'Review approvals', icon: ClipboardCheck, show: auth.canManageApprovals },
+    { href: '/finance', label: 'View payments', icon: CreditCard, show: auth.canViewFinance },
+    { href: '/analytics', label: 'Full analytics', icon: Wallet, show: auth.canViewAnalytics },
+  ].filter((l) => l.show);
 
   return (
-    <main className="min-h-screen bg-slate-50">
-      <header className="border-b bg-white">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-          <div>
-            <h1 className="text-lg font-semibold text-slate-900">Dashboard</h1>
-            <p className="text-sm text-slate-500">Tenant: {tenantId}</p>
-          </div>
-          <button
-            onClick={() => logout()}
-            className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-          >
-            Sign out
-          </button>
-        </div>
-      </header>
+    <AppShell>
+      <div className="space-y-8">
+        <PageHeader
+          title={`Good day, ${auth.user.firstName}`}
+          description="Overview of travel spend, approvals, and payments across your workspace."
+        />
 
-      <div className="mx-auto max-w-5xl px-6 py-10">
-        <div className="rounded-2xl border bg-white p-8 shadow-sm">
-          <p className="text-sm font-medium uppercase tracking-wide text-blue-600">
-            Phase 10 — Production
-          </p>
-          <h2 className="mt-2 text-2xl font-bold text-slate-900">
-            Welcome, {user.firstName} {user.lastName}
-          </h2>
-          <p className="mt-2 text-slate-600">{user.email}</p>
+        {error && <ErrorAlert message={error} />}
 
-          <div className="mt-6 flex flex-wrap gap-3">
-            {canManageUsers && (
-              <Link
-                href="/users"
-                className="inline-flex rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-              >
-                Manage users
-              </Link>
-            )}
-            {(canManagePolicies || canCalculatePerDiem) && (
-              <Link
-                href="/policies"
-                className="inline-flex rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-              >
-                Per diem policies
-              </Link>
-            )}
-            {canManageTravelRequests && (
-              <Link
-                href="/travel-requests"
-                className="inline-flex rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-              >
-                Travel requests
-              </Link>
-            )}
-            {canManageApprovals && (
-              <Link
-                href="/approvals"
-                className="inline-flex rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-800 hover:bg-amber-100"
-              >
-                Pending approvals
-              </Link>
-            )}
-            {canViewFinance && (
-              <Link
-                href="/finance"
-                className="inline-flex rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-800 hover:bg-emerald-100"
-              >
-                {canProcessFinance ? 'Finance & payments' : 'My payments'}
-              </Link>
-            )}
-            <Link
-              href="/notifications"
-              className="inline-flex rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-            >
-              Notifications
-            </Link>
-            {canViewAnalytics && (
-              <Link
-                href="/analytics"
-                className="inline-flex rounded-lg border border-violet-200 bg-violet-50 px-4 py-2 text-sm font-medium text-violet-800 hover:bg-violet-100"
-              >
-                Analytics & reports
-              </Link>
-            )}
-            {canViewSecurityAudit && (
-              <Link
-                href="/security/audit-logs"
-                className="inline-flex rounded-lg border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-medium text-rose-800 hover:bg-rose-100"
-              >
-                Security audit logs
-              </Link>
-            )}
-          </div>
-
-          <dl className="mt-8 grid gap-4 sm:grid-cols-2">
-            <div className="rounded-xl border p-4">
-              <dt className="text-sm text-slate-500">Role</dt>
-              <dd className="mt-1 font-medium text-slate-900">{user.role}</dd>
+        {loading ? (
+          <PageLoading />
+        ) : (
+          <>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <StatCard
+                label="Travel requests"
+                value={dashboard?.travelRequests.total ?? '—'}
+                hint={auth.canReadAllAnalytics ? 'Tenant-wide' : 'Your requests'}
+                icon={Plane}
+              />
+              <StatCard
+                label="Per diem total"
+                value={dashboard ? `$${formatAmount(dashboard.travelRequests.totalPerDiemAmount)}` : '—'}
+                hint="Estimated spend"
+                icon={Wallet}
+              />
+              <StatCard
+                label="Paid"
+                value={dashboard ? `$${formatAmount(dashboard.payments.totalPaid)}` : '—'}
+                hint="Processed payments"
+                icon={CreditCard}
+              />
+              <StatCard
+                label="Pending approvals"
+                value={dashboard?.pendingApprovals ?? '—'}
+                hint="Awaiting action"
+                icon={ClipboardCheck}
+              />
             </div>
-            <div className="rounded-xl border p-4">
-              <dt className="text-sm text-slate-500">Tenant ID</dt>
-              <dd className="mt-1 font-mono text-sm text-slate-900">{user.tenantId}</dd>
-            </div>
-          </dl>
-        </div>
+
+            {auth.canViewAnalytics && dashboard && (
+              <div className="grid gap-6 lg:grid-cols-2">
+                <StatusPieChart
+                  title="Requests by status"
+                  description="Distribution of travel request lifecycle"
+                  data={statusChartData}
+                />
+                <SpendBarChart
+                  title="Spend by destination"
+                  description="Top countries by per diem amount"
+                  data={countryChartData}
+                />
+                <div className="lg:col-span-2">
+                  <TrendLineChart
+                    title="Payment breakdown"
+                    description="Amount by payment status"
+                    data={trendData}
+                  />
+                </div>
+              </div>
+            )}
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Quick actions</CardTitle>
+                <CardDescription>Jump to the most common workflows</CardDescription>
+              </CardHeader>
+              <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                {quickLinks.map((link) => {
+                  const Icon = link.icon;
+                  return (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      className="group flex items-center justify-between rounded-lg border border-border/60 bg-muted/20 px-4 py-3 text-sm font-medium transition-colors hover:border-primary/30 hover:bg-primary/5"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Icon className="h-4 w-4 text-primary" />
+                        {link.label}
+                      </span>
+                      <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+                    </Link>
+                  );
+                })}
+              </CardContent>
+            </Card>
+
+            {!auth.canViewAnalytics && (
+              <Card>
+                <CardContent className="flex flex-col items-center gap-4 py-12 text-center">
+                  <p className="text-sm text-muted-foreground">
+                    Create a travel request to get started with per diem management.
+                  </p>
+                  {auth.canManageTravelRequests && (
+                    <Link href="/travel-requests" className={buttonVariants()}>
+                      Go to travel requests
+                    </Link>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+          </>
+        )}
       </div>
-    </main>
+    </AppShell>
   );
 }

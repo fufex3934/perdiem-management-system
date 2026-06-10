@@ -1,8 +1,12 @@
 'use client';
 
 import { FormEvent, useState } from 'react';
+import { ErrorAlert } from '@/components/shared/error-alert';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { ApiClientError } from '@/lib/api-client';
-import { cn } from '@/lib/utils';
 
 interface Field {
   name: string;
@@ -56,49 +60,37 @@ export function AuthForm({
   }
 
   return (
-    <div className="mx-auto w-full max-w-md rounded-2xl border bg-white p-8 shadow-sm">
-      <h1 className="text-2xl font-bold text-slate-900">{title}</h1>
-      <p className="mt-2 text-sm text-slate-600">{description}</p>
+    <Card className="w-full max-w-md border-border/60 shadow-lg">
+      <CardHeader className="space-y-1">
+        <CardTitle className="text-2xl">{title}</CardTitle>
+        <CardDescription>{description}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form className="space-y-4" onSubmit={handleSubmit}>
+          {fields.map((field) => (
+            <div key={field.name} className="space-y-2">
+              <Label htmlFor={field.name}>{field.label}</Label>
+              <Input
+                id={field.name}
+                name={field.name}
+                type={field.type ?? 'text'}
+                placeholder={field.placeholder}
+                required={field.required ?? true}
+              />
+            </div>
+          ))}
 
-      <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
-        {fields.map((field) => (
-          <div key={field.name}>
-            <label
-              htmlFor={field.name}
-              className="mb-1 block text-sm font-medium text-slate-700"
-            >
-              {field.label}
-            </label>
-            <input
-              id={field.name}
-              name={field.name}
-              type={field.type ?? 'text'}
-              placeholder={field.placeholder}
-              required={field.required ?? true}
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none ring-blue-500 focus:ring-2"
-            />
-          </div>
-        ))}
+          {error && <ErrorAlert message={error} />}
 
-        {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-            {error}
-          </div>
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting ? 'Please wait...' : submitLabel}
+          </Button>
+        </form>
+
+        {footer && (
+          <div className="mt-6 text-center text-sm text-muted-foreground">{footer}</div>
         )}
-
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className={cn(
-            'w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700',
-            isSubmitting && 'cursor-not-allowed opacity-70',
-          )}
-        >
-          {isSubmitting ? 'Please wait...' : submitLabel}
-        </button>
-      </form>
-
-      {footer && <div className="mt-6 text-center text-sm text-slate-600">{footer}</div>}
-    </div>
+      </CardContent>
+    </Card>
   );
 }

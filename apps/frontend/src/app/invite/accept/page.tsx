@@ -3,6 +3,12 @@
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { FormEvent, Suspense, useState } from 'react';
+import { ErrorAlert } from '@/components/shared/error-alert';
+import { PageLoading } from '@/components/shared/page-loading';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { ApiClientError } from '@/lib/api-client';
 import * as usersApi from '@/lib/users-api';
 
@@ -48,71 +54,66 @@ function AcceptInviteForm() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-12">
-      <div className="w-full max-w-md rounded-2xl border bg-white p-8 shadow-sm">
-        <h1 className="text-2xl font-bold text-slate-900">Accept invite</h1>
-        <p className="mt-2 text-sm text-slate-600">
-          Set your password to activate your account.
-        </p>
-
-        <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
-          {!token && (
-            <div>
-              <label htmlFor="token" className="mb-1 block text-sm font-medium text-slate-700">
-                Invite token
-              </label>
-              <input
-                id="token"
-                name="token"
-                required
-                className="w-full rounded-lg border px-3 py-2 text-sm"
-              />
-            </div>
-          )}
-
-          <div>
-            <label htmlFor="password" className="mb-1 block text-sm font-medium text-slate-700">
-              Password
-            </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              required
-              minLength={8}
-              className="w-full rounded-lg border px-3 py-2 text-sm"
-            />
-            <p className="mt-1 text-xs text-slate-500">
-              Must include uppercase, lowercase, and a number.
-            </p>
+    <main className="grid min-h-screen lg:grid-cols-2">
+      <div className="relative hidden flex-col justify-between bg-zinc-950 p-12 text-white lg:flex">
+        <div className="flex items-center gap-2">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-500 text-sm font-bold">
+            P
           </div>
+          <span className="text-lg font-semibold">Per Diem</span>
+        </div>
+        <div className="space-y-4">
+          <h2 className="text-3xl font-semibold tracking-tight">Join your team.</h2>
+          <p className="max-w-md text-zinc-400">
+            Set your password to activate your account and start managing travel per diem.
+          </p>
+        </div>
+        <p className="text-sm text-zinc-500">© Per Diem Management System</p>
+      </div>
 
-          {error && (
-            <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-              {error}
-            </div>
-          )}
+      <div className="flex items-center justify-center bg-muted/30 px-4 py-12">
+        <Card className="w-full max-w-md border-border/60 shadow-sm">
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl">Accept invite</CardTitle>
+            <CardDescription>Set your password to activate your account.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form className="space-y-4" onSubmit={handleSubmit}>
+              {!token && (
+                <div className="space-y-2">
+                  <Label htmlFor="token">Invite token</Label>
+                  <Input id="token" name="token" required />
+                </div>
+              )}
 
-          {success && (
-            <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
-              {success}
-            </div>
-          )}
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input id="password" name="password" type="password" required minLength={8} />
+                <p className="text-xs text-muted-foreground">
+                  Must include uppercase, lowercase, and a number.
+                </p>
+              </div>
 
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-70"
-          >
-            {isSubmitting ? 'Activating...' : 'Activate account'}
-          </button>
-        </form>
+              {error && <ErrorAlert message={error} />}
 
-        <p className="mt-6 text-center text-sm text-slate-600">
-          <Link href="/login" className="font-medium text-blue-600 hover:underline">
-            Back to sign in
-          </Link>
-        </p>
+              {success && (
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50/80 px-4 py-3 text-sm text-emerald-900">
+                  {success}
+                </div>
+              )}
+
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? 'Activating…' : 'Activate account'}
+              </Button>
+            </form>
+
+            <p className="mt-6 text-center text-sm text-muted-foreground">
+              <Link href="/login" className="font-medium text-primary hover:underline">
+                Back to sign in
+              </Link>
+            </p>
+          </CardContent>
+        </Card>
       </div>
     </main>
   );
@@ -120,7 +121,7 @@ function AcceptInviteForm() {
 
 export default function AcceptInvitePage() {
   return (
-    <Suspense fallback={<div className="flex min-h-screen items-center justify-center">Loading...</div>}>
+    <Suspense fallback={<PageLoading />}>
       <AcceptInviteForm />
     </Suspense>
   );

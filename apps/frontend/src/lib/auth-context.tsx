@@ -21,6 +21,7 @@ import {
   canExportFinance,
   canManageApprovals,
   canManagePolicies,
+  canDeletePolicies,
   canManageTravelRequests,
   canManageUsers,
   canProcessFinance,
@@ -36,7 +37,7 @@ import {
 } from './permissions';
 import type { AuthSession, AuthUser, LoginInput, RegisterTenantInput } from './auth-types';
 
-interface AuthContextValue {
+export interface AuthContextValue {
   user: AuthUser | null;
   accessToken: string | null;
   tenantId: string | null;
@@ -45,6 +46,7 @@ interface AuthContextValue {
   isTenantAdmin: boolean;
   canManageUsers: boolean;
   canManagePolicies: boolean;
+  canDeletePolicies: boolean;
   canCalculatePerDiem: boolean;
   canManageTravelRequests: boolean;
   canReadAllTravelRequests: boolean;
@@ -123,6 +125,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isTenantAdmin: isTenantAdmin(role),
       canManageUsers: canManageUsers(role),
       canManagePolicies: canManagePolicies(role),
+      canDeletePolicies: canDeletePolicies(role),
       canCalculatePerDiem: canCalculatePerDiem(role),
       canManageTravelRequests: canManageTravelRequests(role),
       canReadAllTravelRequests: canReadAllTravelRequests(role),
