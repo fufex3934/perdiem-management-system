@@ -20,4 +20,6 @@ export enum Permission {
   FINANCE_READ_ALL = 'finance:read_all',
   FINANCE_PROCESS = 'finance:process',
   FINANCE_EXPORT = 'finance:export',
+  NOTIFICATIONS_READ = 'notifications:read',
+  NOTIFICATIONS_WRITE = 'notifications:write',
 }

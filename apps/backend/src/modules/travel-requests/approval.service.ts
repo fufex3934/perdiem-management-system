@@ -1,6 +1,7 @@
 import { HttpStatus, Inject, Injectable, forwardRef } from '@nestjs/common';
 import { Types } from 'mongoose';
 import { PaymentService } from '../finance/payment.service';
+import { NotificationPublisher } from '../notifications/notification.publisher';
 import { ErrorCodes } from '@/common/constants/error-codes';
 import { ApprovalAuditAction } from '@/common/enums/approval-audit-action.enum';
 import { ApprovalStepStatus } from '@/common/enums/approval-step-status.enum';
@@ -32,6 +33,7 @@ export class ApprovalService {
     private readonly approvalWorkflowService: ApprovalWorkflowService,
     @Inject(forwardRef(() => PaymentService))
     private readonly paymentService: PaymentService,
+    private readonly notificationPublisher: NotificationPublisher,
   ) {}
 
   async processSubmit(
@@ -67,7 +69,29 @@ export class ApprovalService {
         newStatus: TravelRequestStatus.APPROVED,
       });
 
-      await this.paymentService.createFromApprovedTravelRequest(actor.tenantId, updated!);
+      const payment = await this.paymentService.createFromApprovedTravelRequest(
+        actor.tenantId,
+        updated!,
+      );
+
+      await this.notificationPublisher.travelRequestApproved({
+        tenantId: actor.tenantId,
+        travelRequestId: request._id.toString(),
+        requesterId: request.userId.toString(),
+        title: request.title,
+      });
+
+      if (payment) {
+        await this.notificationPublisher.paymentCreated({
+          tenantId: actor.tenantId,
+          paymentId: payment.id,
+          travelRequestId: request._id.toString(),
+          userId: request.userId.toString(),
+          title: request.title,
+          amount: payment.amount,
+          currency: payment.currency,
+        });
+      }
 
       return this.toResponse(updated!);
     }
@@ -95,6 +119,14 @@ export class ApprovalService {
       comment: '',
       previousStatus: TravelRequestStatus.DRAFT,
       newStatus: TravelRequestStatus.PENDING_APPROVAL,
+    });
+
+    await this.notificationPublisher.travelRequestSubmitted({
+      tenantId: actor.tenantId,
+      travelRequestId: request._id.toString(),
+      requesterId: request.userId.toString(),
+      title: request.title,
+      requiredRole: approvalSteps[0].requiredRole,
     });
 
     return this.toResponse(updated!);
@@ -180,7 +212,38 @@ export class ApprovalService {
     });
 
     if (isComplete) {
-      await this.paymentService.createFromApprovedTravelRequest(actor.tenantId, updated!);
+      const payment = await this.paymentService.createFromApprovedTravelRequest(
+        actor.tenantId,
+        updated!,
+      );
+
+      await this.notificationPublisher.travelRequestApproved({
+        tenantId: actor.tenantId,
+        travelRequestId: requestId,
+        requesterId: request.userId.toString(),
+        title: request.title,
+      });
+
+      if (payment) {
+        await this.notificationPublisher.paymentCreated({
+          tenantId: actor.tenantId,
+          paymentId: payment.id,
+          travelRequestId: requestId,
+          userId: request.userId.toString(),
+          title: request.title,
+          amount: payment.amount,
+          currency: payment.currency,
+        });
+      }
+    } else {
+      const nextStep = steps[nextIndex];
+      await this.notificationPublisher.travelRequestStepApproved({
+        tenantId: actor.tenantId,
+        travelRequestId: requestId,
+        requesterId: request.userId.toString(),
+        title: request.title,
+        requiredRole: nextStep.requiredRole,
+      });
     }
 
     return this.toResponse(updated!);
@@ -231,6 +294,13 @@ export class ApprovalService {
       comment,
       previousStatus,
       newStatus: TravelRequestStatus.REJECTED,
+    });
+
+    await this.notificationPublisher.travelRequestRejected({
+      tenantId: actor.tenantId,
+      travelRequestId: requestId,
+      requesterId: request.userId.toString(),
+      title: request.title,
     });
 
     return this.toResponse(updated!);

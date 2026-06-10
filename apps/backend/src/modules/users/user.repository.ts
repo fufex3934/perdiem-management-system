@@ -132,6 +132,17 @@ export class UserRepository {
       .then((result) => result.modifiedCount > 0);
   }
 
+  findActiveByRoleInTenant(tenantId: string, role: UserRole): Promise<UserDocument[]> {
+    return this.userModel
+      .find({
+        tenantId: new Types.ObjectId(tenantId),
+        role,
+        status: UserStatus.ACTIVE,
+        isDeleted: false,
+      })
+      .exec();
+  }
+
   countByRoleInTenant(tenantId: string, role: UserRole): Promise<number> {
     return this.userModel.countDocuments({
       tenantId: new Types.ObjectId(tenantId),

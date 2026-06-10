@@ -7,6 +7,7 @@ import { TravelRequestStatus } from '@/common/enums/travel-request-status.enum';
 import { BusinessException } from '@/common/exceptions/business.exception';
 import { AuthenticatedUser } from '@/common/interfaces/authenticated-user.interface';
 import { roleHasPermission } from '@/common/rbac/role-permissions';
+import { NotificationPublisher } from '../notifications/notification.publisher';
 import { TravelRequestDocument } from '../travel-requests/schemas/travel-request.schema';
 import { ListPaymentsQueryDto } from './dto/list-payments-query.dto';
 import { MarkPaymentDto } from './dto/mark-payment.dto';
@@ -20,7 +21,10 @@ import { PerDiemPaymentDocument } from './schemas/per-diem-payment.schema';
 
 @Injectable()
 export class PaymentService {
-  constructor(private readonly paymentRepository: PaymentRepository) {}
+  constructor(
+    private readonly paymentRepository: PaymentRepository,
+    private readonly notificationPublisher: NotificationPublisher,
+  ) {}
 
   async createFromApprovedTravelRequest(
     tenantId: string,
@@ -113,7 +117,19 @@ export class PaymentService {
       paidAt: now,
     });
 
-    return PaymentResponseDto.fromDocument(updated!);
+    const response = PaymentResponseDto.fromDocument(updated!);
+
+    await this.notificationPublisher.paymentPaid({
+      tenantId: actor.tenantId,
+      paymentId: response.id,
+      travelRequestId: response.travelRequestId,
+      userId: response.userId,
+      title: response.travelTitle,
+      amount: response.amount,
+      currency: response.currency,
+    });
+
+    return response;
   }
 
   async markFailed(

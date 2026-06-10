@@ -1,6 +1,7 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { FinanceModule } from '../finance/finance.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 import { PoliciesModule } from '../policies/policies.module';
 import { ApprovalAuditRepository } from './approval-audit.repository';
 import { ApprovalWorkflowService } from './approval-workflow.service';
@@ -23,6 +24,7 @@ import { TravelRequestsController } from './travel-requests.controller';
     ]),
     PoliciesModule,
     forwardRef(() => FinanceModule),
+    NotificationsModule,
   ],
   controllers: [TravelRequestsController, ApprovalsController],
   providers: [

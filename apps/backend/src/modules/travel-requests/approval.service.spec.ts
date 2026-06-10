@@ -3,6 +3,7 @@ import { ApprovalStepStatus } from '@/common/enums/approval-step-status.enum';
 import { TravelRequestStatus } from '@/common/enums/travel-request-status.enum';
 import { UserRole } from '@/common/enums/user-role.enum';
 import { PaymentService } from '../finance/payment.service';
+import { NotificationPublisher } from '../notifications/notification.publisher';
 import { ApprovalAuditRepository } from './approval-audit.repository';
 import { ApprovalWorkflowService } from './approval-workflow.service';
 import { ApprovalService } from './approval.service';
@@ -14,6 +15,7 @@ describe('ApprovalService', () => {
   let repository: jest.Mocked<TravelRequestRepository>;
   let auditRepository: jest.Mocked<ApprovalAuditRepository>;
   let paymentService: jest.Mocked<PaymentService>;
+  let notificationPublisher: jest.Mocked<NotificationPublisher>;
 
   const tenantId = '507f1f77bcf86cd799439011';
   const employeeId = '507f1f77bcf86cd799439012';
@@ -92,11 +94,21 @@ describe('ApprovalService', () => {
       createFromApprovedTravelRequest: jest.fn().mockResolvedValue(null),
     } as unknown as jest.Mocked<PaymentService>;
 
+    notificationPublisher = {
+      travelRequestSubmitted: jest.fn().mockResolvedValue(undefined),
+      travelRequestStepApproved: jest.fn().mockResolvedValue(undefined),
+      travelRequestApproved: jest.fn().mockResolvedValue(undefined),
+      travelRequestRejected: jest.fn().mockResolvedValue(undefined),
+      paymentCreated: jest.fn().mockResolvedValue(undefined),
+      paymentPaid: jest.fn().mockResolvedValue(undefined),
+    } as unknown as jest.Mocked<NotificationPublisher>;
+
     service = new ApprovalService(
       repository,
       auditRepository,
       new ApprovalWorkflowService(),
       paymentService,
+      notificationPublisher,
     );
   });
 

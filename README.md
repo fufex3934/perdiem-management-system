@@ -91,6 +91,24 @@ pnpm --filter @perdiem/backend test:e2e
 - [x] Next.js frontend with API client
 - [x] Unit & integration tests
 
+## Phase 7 — Notifications (Complete)
+
+- [x] In-process event bus for domain events
+- [x] Notifications on travel submit, approval steps, rejection, payment created/paid
+- [x] Role-targeted delivery to approvers and requesters
+- [x] In-app inbox with unread count, mark read, mark all read
+- [x] Frontend notifications page
+- [x] Unit and E2E tests
+
+### Notifications API
+
+| Method | Endpoint | Permission | Description |
+|--------|----------|------------|-------------|
+| GET | `/api/v1/notifications` | `notifications:read` | List user's notifications |
+| GET | `/api/v1/notifications/unread-count` | `notifications:read` | Get unread count |
+| PATCH | `/api/v1/notifications/:id/read` | `notifications:write` | Mark notification as read |
+| POST | `/api/v1/notifications/mark-all-read` | `notifications:write` | Mark all as read |
+
 ## Phase 6 — Finance (Complete)
 
 - [x] Per diem payment records auto-created on travel request approval
@@ -222,7 +240,7 @@ pnpm --filter @perdiem/backend test:e2e
 | 4 | Travel Request | ✅ Complete |
 | 5 | Approval Workflow | ✅ Complete |
 | 6 | Finance | ✅ Complete |
-| 7 | Notifications | Pending |
+| 7 | Notifications | ✅ Complete |
 | 8 | Analytics | Pending |
 | 9 | Security Hardening | Pending |
 | 10 | Production | Pending |

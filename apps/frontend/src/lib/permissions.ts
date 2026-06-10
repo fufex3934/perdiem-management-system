@@ -20,6 +20,8 @@ export const Permission = {
   FINANCE_READ_ALL: 'finance:read_all',
   FINANCE_PROCESS: 'finance:process',
   FINANCE_EXPORT: 'finance:export',
+  NOTIFICATIONS_READ: 'notifications:read',
+  NOTIFICATIONS_WRITE: 'notifications:write',
 } as const;
 
 export type Permission = (typeof Permission)[keyof typeof Permission];
@@ -52,6 +54,8 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     Permission.FINANCE_READ,
     Permission.FINANCE_READ_ALL,
     Permission.FINANCE_EXPORT,
+    Permission.NOTIFICATIONS_READ,
+    Permission.NOTIFICATIONS_WRITE,
   ],
   [UserRole.EMPLOYEE]: [
     Permission.POLICIES_READ,
@@ -61,6 +65,8 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     Permission.TRAVEL_REQUESTS_SUBMIT,
     Permission.TRAVEL_REQUESTS_CANCEL,
     Permission.FINANCE_READ,
+    Permission.NOTIFICATIONS_READ,
+    Permission.NOTIFICATIONS_WRITE,
   ],
 };
 

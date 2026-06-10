@@ -3,6 +3,7 @@ import { PaymentStatus } from '@/common/enums/payment-status.enum';
 import { TravelRequestStatus } from '@/common/enums/travel-request-status.enum';
 import { UserRole } from '@/common/enums/user-role.enum';
 import { TravelRequestDocument } from '../travel-requests/schemas/travel-request.schema';
+import { NotificationPublisher } from '../notifications/notification.publisher';
 import { PaymentRepository } from './payment.repository';
 import { PaymentService } from './payment.service';
 import { PerDiemPaymentDocument } from './schemas/per-diem-payment.schema';
@@ -10,6 +11,7 @@ import { PerDiemPaymentDocument } from './schemas/per-diem-payment.schema';
 describe('PaymentService', () => {
   let service: PaymentService;
   let repository: jest.Mocked<PaymentRepository>;
+  let notificationPublisher: jest.Mocked<NotificationPublisher>;
 
   const tenantId = '507f1f77bcf86cd799439011';
   const userId = '507f1f77bcf86cd799439012';
@@ -75,7 +77,16 @@ describe('PaymentService', () => {
       updateInTenant: jest.fn(),
     } as unknown as jest.Mocked<PaymentRepository>;
 
-    service = new PaymentService(repository);
+    notificationPublisher = {
+      travelRequestSubmitted: jest.fn(),
+      travelRequestStepApproved: jest.fn(),
+      travelRequestApproved: jest.fn(),
+      travelRequestRejected: jest.fn(),
+      paymentCreated: jest.fn(),
+      paymentPaid: jest.fn().mockResolvedValue(undefined),
+    } as unknown as jest.Mocked<NotificationPublisher>;
+
+    service = new PaymentService(repository, notificationPublisher);
   });
 
   it('should create payment from approved travel request', async () => {

@@ -45,6 +45,12 @@ describe('Role Permissions', () => {
     expect(employeePermissions).not.toContain(Permission.APPROVALS_APPROVE);
   });
 
+  it('should grant notifications read/write to all roles', () => {
+    expect(roleHasPermission(UserRole.EMPLOYEE, Permission.NOTIFICATIONS_READ)).toBe(true);
+    expect(roleHasPermission(UserRole.EMPLOYEE, Permission.NOTIFICATIONS_WRITE)).toBe(true);
+    expect(roleHasPermission(UserRole.MANAGER, Permission.NOTIFICATIONS_READ)).toBe(true);
+  });
+
   it('should grant finance process to tenant admin only', () => {
     expect(roleHasPermission(UserRole.TENANT_ADMIN, Permission.FINANCE_PROCESS)).toBe(true);
     expect(roleHasPermission(UserRole.MANAGER, Permission.FINANCE_PROCESS)).toBe(false);

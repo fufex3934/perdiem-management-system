@@ -24,7 +24,7 @@ export default async function HomePage() {
       <div className="mx-auto flex min-h-screen max-w-5xl flex-col items-center justify-center px-6 py-16">
         <div className="w-full max-w-2xl rounded-2xl border bg-white p-10 shadow-sm">
           <div className="mb-6 inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700">
-            Phase 6 — Finance
+            Phase 7 — Notifications
           </div>
 
           <h1 className="text-4xl font-bold tracking-tight text-slate-900">
@@ -104,17 +104,23 @@ export default async function HomePage() {
             >
               Finance
             </Link>
+            <Link
+              href="/notifications"
+              className="rounded-lg border border-slate-200 px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              Notifications
+            </Link>
           </div>
 
           <div className="mt-8 rounded-lg border border-dashed border-slate-200 bg-slate-50 p-6">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-              Phase 6 Complete
+              Phase 7 Complete
             </h2>
             <ul className="mt-3 space-y-2 text-sm text-slate-600">
-              <li>✓ Auto-create payments when travel requests are approved</li>
-              <li>✓ Mark payments as paid or failed with references</li>
-              <li>✓ CSV export for finance reporting</li>
-              <li>✓ Finance page with role-scoped payment access</li>
+              <li>✓ Event-driven notifications on submit, approve, reject, payment</li>
+              <li>✓ In-app inbox with unread count and mark-as-read</li>
+              <li>✓ Role-targeted alerts for approvers and requesters</li>
+              <li>✓ Notifications page for all authenticated users</li>
             </ul>
           </div>
         </div>
