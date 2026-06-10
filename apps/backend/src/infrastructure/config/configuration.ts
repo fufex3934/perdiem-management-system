@@ -23,11 +23,18 @@ export interface LoggingConfig {
   level: string;
 }
 
+export interface RateLimitConfig {
+  ttlMs: number;
+  max: number;
+  authMax: number;
+}
+
 export interface AllConfig {
   app: AppConfig;
   database: DatabaseConfig;
   jwt: JwtConfig;
   logging: LoggingConfig;
+  rateLimit: RateLimitConfig;
 }
 
 export default (): AllConfig => ({
@@ -52,5 +59,10 @@ export default (): AllConfig => ({
   },
   logging: {
     level: process.env.LOG_LEVEL ?? 'info',
+  },
+  rateLimit: {
+    ttlMs: parseInt(process.env.RATE_LIMIT_TTL_MS ?? '60000', 10),
+    max: parseInt(process.env.RATE_LIMIT_MAX ?? '100', 10),
+    authMax: parseInt(process.env.RATE_LIMIT_AUTH_MAX ?? '10', 10),
   },
 });

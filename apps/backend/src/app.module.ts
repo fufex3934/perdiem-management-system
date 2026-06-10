@@ -4,6 +4,7 @@ import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
+import { RateLimitGuard } from './common/guards/rate-limit.guard';
 import { PermissionsGuard } from './common/guards/permissions.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { TenantGuard } from './common/guards/tenant.guard';
@@ -14,7 +15,9 @@ import configuration from './infrastructure/config/configuration';
 import { validate } from './infrastructure/config/env.validation';
 import { DatabaseModule } from './infrastructure/database/database.module';
 import { LoggerModule } from './infrastructure/logging/logger.module';
+import { RateLimitService } from './common/rate-limit/rate-limit.service';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
+import { SecurityModule } from './modules/security/security.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { HealthModule } from './modules/health/health.module';
 import { PoliciesModule } from './modules/policies/policies.module';
@@ -42,9 +45,11 @@ import { UserModule } from './modules/users/user.module';
     FinanceModule,
     NotificationsModule,
     AnalyticsModule,
+    SecurityModule,
     HealthModule,
   ],
   providers: [
+    RateLimitService,
     {
       provide: APP_FILTER,
       useClass: AllExceptionsFilter,
@@ -60,6 +65,10 @@ import { UserModule } from './modules/users/user.module';
     {
       provide: APP_INTERCEPTOR,
       useClass: TransformInterceptor,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RateLimitGuard,
     },
     {
       provide: APP_GUARD,

@@ -4,7 +4,9 @@ import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import { Types } from 'mongoose';
 import { ErrorCodes } from '@/common/constants/error-codes';
+import { SecurityAuditAction } from '@/common/enums/security-audit-action.enum';
 import { UserRole } from '@/common/enums/user-role.enum';
+import { HttpContext } from '@/common/interfaces/http-context.interface';
 import { UserStatus } from '@/common/enums/user-status.enum';
 import { BusinessException } from '@/common/exceptions/business.exception';
 import { AuthenticatedUser } from '@/common/interfaces/authenticated-user.interface';
@@ -17,6 +19,7 @@ import {
 import { InviteRepository } from './invite.repository';
 import { InviteDocument } from './schemas/invite.schema';
 import { UserRepository } from './user.repository';
+import { SecurityAuditService } from '../security/security-audit.service';
 import { UserManagementService } from './user-management.service';
 
 const INVITE_EXPIRY_DAYS = 7;
@@ -27,12 +30,14 @@ export class InviteService {
     private readonly inviteRepository: InviteRepository,
     private readonly userRepository: UserRepository,
     private readonly userManagementService: UserManagementService,
+    private readonly securityAuditService: SecurityAuditService,
     private readonly configService: ConfigService<AllConfig, true>,
   ) {}
 
   async createInvite(
     actor: AuthenticatedUser,
     dto: CreateInviteDto,
+    httpContext?: HttpContext,
   ): Promise<CreateInviteResponseDto> {
     const tenantId = actor.tenantId;
     const role = dto.role ?? UserRole.EMPLOYEE;
@@ -94,6 +99,18 @@ export class InviteService {
 
     const corsOrigin = this.configService.get('app.corsOrigins', { infer: true })[0];
 
+    this.securityAuditService.record({
+      tenantId,
+      userId: actor.userId,
+      actorEmail: actor.email,
+      action: SecurityAuditAction.USER_INVITE_CREATED,
+      resourceType: 'invite',
+      resourceId: invite._id.toString(),
+      success: true,
+      metadata: { email: dto.email, role },
+      httpContext,
+    });
+
     return {
       invite: this.mapInvite(invite),
       inviteToken: rawToken,
@@ -110,6 +127,7 @@ export class InviteService {
     tenantId: string,
     inviteId: string,
     actor: AuthenticatedUser,
+    httpContext?: HttpContext,
   ): Promise<{ message: string }> {
     const invite = await this.inviteRepository.findByIdInTenant(tenantId, inviteId);
 
@@ -136,6 +154,17 @@ export class InviteService {
     }
 
     await this.userRepository.softDeleteInTenant(tenantId, invite.userId.toString());
+
+    this.securityAuditService.record({
+      tenantId,
+      userId: actor.userId,
+      actorEmail: actor.email,
+      action: SecurityAuditAction.USER_INVITE_REVOKED,
+      resourceType: 'invite',
+      resourceId: inviteId,
+      success: true,
+      httpContext,
+    });
 
     return { message: 'Invite revoked successfully' };
   }

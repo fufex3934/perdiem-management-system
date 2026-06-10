@@ -1,6 +1,7 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from '../auth/auth.module';
+import { SecurityModule } from '../security/security.module';
 import { InviteRepository } from './invite.repository';
 import { InviteService } from './invite.service';
 import { Invite, InviteSchema } from './schemas/invite.schema';
@@ -13,6 +14,7 @@ import { UsersController } from './users.controller';
 @Module({
   imports: [
     forwardRef(() => AuthModule),
+    SecurityModule,
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema },
       { name: Invite.name, schema: InviteSchema },

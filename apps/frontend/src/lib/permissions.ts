@@ -25,6 +25,7 @@ export const Permission = {
   ANALYTICS_READ: 'analytics:read',
   ANALYTICS_READ_OWN: 'analytics:read_own',
   ANALYTICS_EXPORT: 'analytics:export',
+  SECURITY_AUDIT_READ: 'security:audit_read',
 } as const;
 
 export type Permission = (typeof Permission)[keyof typeof Permission];
@@ -139,4 +140,8 @@ export function canReadAllAnalytics(role: string): boolean {
 
 export function canExportAnalytics(role: string): boolean {
   return hasPermission(role, Permission.ANALYTICS_EXPORT);
+}
+
+export function canViewSecurityAudit(role: string): boolean {
+  return hasPermission(role, Permission.SECURITY_AUDIT_READ);
 }

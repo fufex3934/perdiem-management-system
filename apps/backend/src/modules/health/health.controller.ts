@@ -6,9 +6,11 @@ import {
   MongooseHealthIndicator,
 } from '@nestjs/terminus';
 import { Public } from '@/common/decorators/public.decorator';
+import { SkipRateLimit } from '@/common/decorators/rate-limit.decorator';
 
 @Controller('health')
 @Public()
+@SkipRateLimit()
 export class HealthController {
   constructor(
     private readonly health: HealthCheckService,

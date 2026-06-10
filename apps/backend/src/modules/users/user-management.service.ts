@@ -1,10 +1,13 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { ErrorCodes } from '@/common/constants/error-codes';
+import { SecurityAuditAction } from '@/common/enums/security-audit-action.enum';
 import { UserRole } from '@/common/enums/user-role.enum';
+import { HttpContext } from '@/common/interfaces/http-context.interface';
 import { UserStatus } from '@/common/enums/user-status.enum';
 import { BusinessException } from '@/common/exceptions/business.exception';
 import { AuthenticatedUser } from '@/common/interfaces/authenticated-user.interface';
 import { RefreshTokenRepository } from '../auth/refresh-token.repository';
+import { SecurityAuditService } from '../security/security-audit.service';
 import { CreateInviteDto } from './dto/create-invite.dto';
 import { ListUsersQueryDto } from './dto/list-users-query.dto';
 import {
@@ -22,6 +25,7 @@ export class UserManagementService {
     private readonly userRepository: UserRepository,
     private readonly userService: UserService,
     private readonly refreshTokenRepository: RefreshTokenRepository,
+    private readonly securityAuditService: SecurityAuditService,
   ) {}
 
   async listUsers(
@@ -57,6 +61,7 @@ export class UserManagementService {
     userId: string,
     actor: AuthenticatedUser,
     dto: UpdateUserDto,
+    httpContext?: HttpContext,
   ): Promise<UserResponseDto> {
     const user = await this.userService.getProfile(tenantId, userId);
 
@@ -95,6 +100,18 @@ export class UserManagementService {
       await this.refreshTokenRepository.revokeAllForUser(tenantId, userId);
     }
 
+    this.securityAuditService.record({
+      tenantId,
+      userId: actor.userId,
+      actorEmail: actor.email,
+      action: SecurityAuditAction.USER_UPDATED,
+      resourceType: 'user',
+      resourceId: userId,
+      success: true,
+      metadata: { changes: dto },
+      httpContext,
+    });
+
     return UserResponseDto.fromDocument(updated);
   }
 
@@ -102,6 +119,7 @@ export class UserManagementService {
     tenantId: string,
     userId: string,
     actor: AuthenticatedUser,
+    httpContext?: HttpContext,
   ): Promise<{ message: string }> {
     if (actor.userId === userId) {
       throw new BusinessException(
@@ -129,6 +147,17 @@ export class UserManagementService {
     }
 
     await this.refreshTokenRepository.revokeAllForUser(tenantId, userId);
+
+    this.securityAuditService.record({
+      tenantId,
+      userId: actor.userId,
+      actorEmail: actor.email,
+      action: SecurityAuditAction.USER_DELETED,
+      resourceType: 'user',
+      resourceId: userId,
+      success: true,
+      httpContext,
+    });
 
     return { message: 'User deleted successfully' };
   }

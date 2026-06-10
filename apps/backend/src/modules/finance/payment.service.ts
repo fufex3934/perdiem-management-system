@@ -2,12 +2,15 @@ import { HttpStatus, Injectable } from '@nestjs/common';
 import { Types } from 'mongoose';
 import { ErrorCodes } from '@/common/constants/error-codes';
 import { PaymentStatus } from '@/common/enums/payment-status.enum';
+import { SecurityAuditAction } from '@/common/enums/security-audit-action.enum';
 import { Permission } from '@/common/enums/permission.enum';
 import { TravelRequestStatus } from '@/common/enums/travel-request-status.enum';
 import { BusinessException } from '@/common/exceptions/business.exception';
+import { HttpContext } from '@/common/interfaces/http-context.interface';
 import { AuthenticatedUser } from '@/common/interfaces/authenticated-user.interface';
 import { roleHasPermission } from '@/common/rbac/role-permissions';
 import { NotificationPublisher } from '../notifications/notification.publisher';
+import { SecurityAuditService } from '../security/security-audit.service';
 import { TravelRequestDocument } from '../travel-requests/schemas/travel-request.schema';
 import { ListPaymentsQueryDto } from './dto/list-payments-query.dto';
 import { MarkPaymentDto } from './dto/mark-payment.dto';
@@ -24,6 +27,7 @@ export class PaymentService {
   constructor(
     private readonly paymentRepository: PaymentRepository,
     private readonly notificationPublisher: NotificationPublisher,
+    private readonly securityAuditService: SecurityAuditService,
   ) {}
 
   async createFromApprovedTravelRequest(
@@ -94,6 +98,7 @@ export class PaymentService {
     actor: AuthenticatedUser,
     paymentId: string,
     dto: MarkPaymentDto,
+    httpContext?: HttpContext,
   ): Promise<PaymentResponseDto> {
     const payment = await this.getPaymentOrThrow(actor.tenantId, paymentId);
 
@@ -129,6 +134,18 @@ export class PaymentService {
       currency: response.currency,
     });
 
+    this.securityAuditService.record({
+      tenantId: actor.tenantId,
+      userId: actor.userId,
+      actorEmail: actor.email,
+      action: SecurityAuditAction.FINANCE_PAYMENT_PAID,
+      resourceType: 'payment',
+      resourceId: paymentId,
+      success: true,
+      metadata: { amount: response.amount, currency: response.currency },
+      httpContext,
+    });
+
     return response;
   }
 
@@ -136,6 +153,7 @@ export class PaymentService {
     actor: AuthenticatedUser,
     paymentId: string,
     dto: MarkPaymentDto,
+    httpContext?: HttpContext,
   ): Promise<PaymentResponseDto> {
     const payment = await this.getPaymentOrThrow(actor.tenantId, paymentId);
 
@@ -157,7 +175,21 @@ export class PaymentService {
       processedBy: new Types.ObjectId(actor.userId),
     });
 
-    return PaymentResponseDto.fromDocument(updated!);
+    const response = PaymentResponseDto.fromDocument(updated!);
+
+    this.securityAuditService.record({
+      tenantId: actor.tenantId,
+      userId: actor.userId,
+      actorEmail: actor.email,
+      action: SecurityAuditAction.FINANCE_PAYMENT_FAILED,
+      resourceType: 'payment',
+      resourceId: paymentId,
+      success: true,
+      metadata: { amount: response.amount, currency: response.currency },
+      httpContext,
+    });
+
+    return response;
   }
 
   async exportCsv(

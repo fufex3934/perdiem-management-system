@@ -91,6 +91,30 @@ pnpm --filter @perdiem/backend test:e2e
 - [x] Next.js frontend with API client
 - [x] Unit & integration tests
 
+## Phase 9 — Security Hardening (Complete)
+
+- [x] Centralized security audit logs for auth, user management, and finance actions
+- [x] IP, user agent, and request ID captured on every audit event
+- [x] Tenant-scoped audit log API for tenant admins
+- [x] Global per-IP rate limiting with stricter limits on auth endpoints
+- [x] Health endpoints exempt from rate limiting
+- [x] Frontend security audit logs page
+- [x] Unit and E2E tests
+
+### Security API
+
+| Method | Endpoint | Permission | Description |
+|--------|----------|------------|-------------|
+| GET | `/api/v1/security/audit-logs` | `security:audit_read` | List tenant security audit logs |
+
+### Rate limiting
+
+| Scope | Default | Config |
+|-------|---------|--------|
+| Global API | 100 req / 60s per IP | `RATE_LIMIT_MAX`, `RATE_LIMIT_TTL_MS` |
+| Auth endpoints | 5–20 req / 60s per IP | `@RateLimit` per route |
+| Health checks | Exempt | `@SkipRateLimit` |
+
 ## Phase 8 — Analytics (Complete)
 
 - [x] Tenant-wide dashboard KPIs for managers and admins
@@ -260,7 +284,7 @@ pnpm --filter @perdiem/backend test:e2e
 | 6 | Finance | ✅ Complete |
 | 7 | Notifications | ✅ Complete |
 | 8 | Analytics | ✅ Complete |
-| 9 | Security Hardening | Pending |
+| 9 | Security Hardening | ✅ Complete |
 | 10 | Production | Pending |
 
 ## API Endpoints (Phase 0)

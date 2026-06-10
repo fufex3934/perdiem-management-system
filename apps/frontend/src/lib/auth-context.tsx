@@ -29,6 +29,7 @@ import {
   canReadAllTravelRequests,
   canViewAnalytics,
   canViewFinance,
+  canViewSecurityAudit,
   hasPermission,
   isTenantAdmin,
   Permission,
@@ -55,6 +56,7 @@ interface AuthContextValue {
   canViewAnalytics: boolean;
   canReadAllAnalytics: boolean;
   canExportAnalytics: boolean;
+  canViewSecurityAudit: boolean;
   hasPermission: (permission: Permission) => boolean;
   login: (input: LoginInput) => Promise<void>;
   registerTenant: (input: RegisterTenantInput) => Promise<void>;
@@ -132,6 +134,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       canViewAnalytics: canViewAnalytics(role),
       canReadAllAnalytics: canReadAllAnalytics(role),
       canExportAnalytics: canExportAnalytics(role),
+      canViewSecurityAudit: canViewSecurityAudit(role),
       hasPermission: (permission: Permission) => hasPermission(role, permission),
       login,
       registerTenant,

@@ -1,5 +1,7 @@
 import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import { HttpContextParam } from '@/common/decorators/http-context.decorator';
+import { HttpContext } from '@/common/interfaces/http-context.interface';
 import { RequirePermissions } from '@/common/decorators/require-permissions.decorator';
 import { Permission } from '@/common/enums/permission.enum';
 import { AuthenticatedUser } from '@/common/interfaces/authenticated-user.interface';
@@ -35,8 +37,9 @@ export class FinanceController {
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') paymentId: string,
     @Body() dto: MarkPaymentDto,
+    @HttpContextParam() httpContext: HttpContext,
   ) {
-    return this.paymentService.markPaid(user, paymentId, dto);
+    return this.paymentService.markPaid(user, paymentId, dto, httpContext);
   }
 
   @Post(':id/mark-failed')
@@ -45,7 +48,8 @@ export class FinanceController {
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') paymentId: string,
     @Body() dto: MarkPaymentDto,
+    @HttpContextParam() httpContext: HttpContext,
   ) {
-    return this.paymentService.markFailed(user, paymentId, dto);
+    return this.paymentService.markFailed(user, paymentId, dto, httpContext);
   }
 }

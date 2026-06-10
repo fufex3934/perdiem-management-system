@@ -20,6 +20,7 @@ export default function DashboardPage() {
     canViewFinance,
     canProcessFinance,
     canViewAnalytics,
+    canViewSecurityAudit,
     logout,
   } = useAuth();
 
@@ -57,7 +58,7 @@ export default function DashboardPage() {
       <div className="mx-auto max-w-5xl px-6 py-10">
         <div className="rounded-2xl border bg-white p-8 shadow-sm">
           <p className="text-sm font-medium uppercase tracking-wide text-blue-600">
-            Phase 8 — Analytics
+            Phase 9 — Security Hardening
           </p>
           <h2 className="mt-2 text-2xl font-bold text-slate-900">
             Welcome, {user.firstName} {user.lastName}
@@ -117,6 +118,14 @@ export default function DashboardPage() {
                 className="inline-flex rounded-lg border border-violet-200 bg-violet-50 px-4 py-2 text-sm font-medium text-violet-800 hover:bg-violet-100"
               >
                 Analytics & reports
+              </Link>
+            )}
+            {canViewSecurityAudit && (
+              <Link
+                href="/security/audit-logs"
+                className="inline-flex rounded-lg border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-medium text-rose-800 hover:bg-rose-100"
+              >
+                Security audit logs
               </Link>
             )}
           </div>

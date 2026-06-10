@@ -25,4 +25,5 @@ export enum Permission {
   ANALYTICS_READ = 'analytics:read',
   ANALYTICS_READ_OWN = 'analytics:read_own',
   ANALYTICS_EXPORT = 'analytics:export',
+  SECURITY_AUDIT_READ = 'security:audit_read',
 }

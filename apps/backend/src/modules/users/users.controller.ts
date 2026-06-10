@@ -9,6 +9,8 @@ import {
   Query,
 } from '@nestjs/common';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import { HttpContextParam } from '@/common/decorators/http-context.decorator';
+import { HttpContext } from '@/common/interfaces/http-context.interface';
 import { RequirePermissions } from '@/common/decorators/require-permissions.decorator';
 import { Permission } from '@/common/enums/permission.enum';
 import { AuthenticatedUser } from '@/common/interfaces/authenticated-user.interface';
@@ -45,8 +47,9 @@ export class UsersController {
   createInvite(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: CreateInviteDto,
+    @HttpContextParam() httpContext: HttpContext,
   ) {
-    return this.inviteService.createInvite(user, dto);
+    return this.inviteService.createInvite(user, dto, httpContext);
   }
 
   @Delete('invites/:id')
@@ -54,8 +57,9 @@ export class UsersController {
   revokeInvite(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') inviteId: string,
+    @HttpContextParam() httpContext: HttpContext,
   ) {
-    return this.inviteService.revokeInvite(user.tenantId, inviteId, user);
+    return this.inviteService.revokeInvite(user.tenantId, inviteId, user, httpContext);
   }
 
   @Get(':id')
@@ -73,8 +77,15 @@ export class UsersController {
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') userId: string,
     @Body() dto: UpdateUserDto,
+    @HttpContextParam() httpContext: HttpContext,
   ) {
-    return this.userManagementService.updateUser(user.tenantId, userId, user, dto);
+    return this.userManagementService.updateUser(
+      user.tenantId,
+      userId,
+      user,
+      dto,
+      httpContext,
+    );
   }
 
   @Delete(':id')
@@ -82,7 +93,8 @@ export class UsersController {
   deleteUser(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') userId: string,
+    @HttpContextParam() httpContext: HttpContext,
   ) {
-    return this.userManagementService.deleteUser(user.tenantId, userId, user);
+    return this.userManagementService.deleteUser(user.tenantId, userId, user, httpContext);
   }
 }

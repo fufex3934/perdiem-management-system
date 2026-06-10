@@ -4,6 +4,7 @@ import { TravelRequestStatus } from '@/common/enums/travel-request-status.enum';
 import { UserRole } from '@/common/enums/user-role.enum';
 import { TravelRequestDocument } from '../travel-requests/schemas/travel-request.schema';
 import { NotificationPublisher } from '../notifications/notification.publisher';
+import { SecurityAuditService } from '../security/security-audit.service';
 import { PaymentRepository } from './payment.repository';
 import { PaymentService } from './payment.service';
 import { PerDiemPaymentDocument } from './schemas/per-diem-payment.schema';
@@ -12,6 +13,7 @@ describe('PaymentService', () => {
   let service: PaymentService;
   let repository: jest.Mocked<PaymentRepository>;
   let notificationPublisher: jest.Mocked<NotificationPublisher>;
+  let securityAuditService: jest.Mocked<SecurityAuditService>;
 
   const tenantId = '507f1f77bcf86cd799439011';
   const userId = '507f1f77bcf86cd799439012';
@@ -86,7 +88,11 @@ describe('PaymentService', () => {
       paymentPaid: jest.fn().mockResolvedValue(undefined),
     } as unknown as jest.Mocked<NotificationPublisher>;
 
-    service = new PaymentService(repository, notificationPublisher);
+    securityAuditService = {
+      record: jest.fn(),
+    } as unknown as jest.Mocked<SecurityAuditService>;
+
+    service = new PaymentService(repository, notificationPublisher, securityAuditService);
   });
 
   it('should create payment from approved travel request', async () => {

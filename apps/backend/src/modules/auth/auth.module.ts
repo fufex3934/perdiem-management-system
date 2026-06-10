@@ -4,6 +4,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { MongooseModule } from '@nestjs/mongoose';
 import { PassportModule } from '@nestjs/passport';
 import { AllConfig } from '@/infrastructure/config/configuration';
+import { SecurityModule } from '../security/security.module';
 import { TenantModule } from '../tenant/tenant.module';
 import { UserModule } from '../users/user.module';
 import { AuthController } from './auth.controller';
@@ -31,6 +32,7 @@ import { JwtAccessStrategy } from './strategies/jwt-access.strategy';
       { name: RefreshToken.name, schema: RefreshTokenSchema },
     ]),
     TenantModule,
+    SecurityModule,
     forwardRef(() => UserModule),
   ],
   controllers: [AuthController],

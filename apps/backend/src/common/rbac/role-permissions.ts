@@ -29,6 +29,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     Permission.ANALYTICS_READ,
     Permission.ANALYTICS_READ_OWN,
     Permission.ANALYTICS_EXPORT,
+    Permission.SECURITY_AUDIT_READ,
   ],
   [UserRole.MANAGER]: [
     Permission.USERS_READ,
