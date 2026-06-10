@@ -19,6 +19,7 @@ export default function DashboardPage() {
     canManageApprovals,
     canViewFinance,
     canProcessFinance,
+    canViewAnalytics,
     logout,
   } = useAuth();
 
@@ -56,7 +57,7 @@ export default function DashboardPage() {
       <div className="mx-auto max-w-5xl px-6 py-10">
         <div className="rounded-2xl border bg-white p-8 shadow-sm">
           <p className="text-sm font-medium uppercase tracking-wide text-blue-600">
-            Phase 7 — Notifications
+            Phase 8 — Analytics
           </p>
           <h2 className="mt-2 text-2xl font-bold text-slate-900">
             Welcome, {user.firstName} {user.lastName}
@@ -110,6 +111,14 @@ export default function DashboardPage() {
             >
               Notifications
             </Link>
+            {canViewAnalytics && (
+              <Link
+                href="/analytics"
+                className="inline-flex rounded-lg border border-violet-200 bg-violet-50 px-4 py-2 text-sm font-medium text-violet-800 hover:bg-violet-100"
+              >
+                Analytics & reports
+              </Link>
+            )}
           </div>
 
           <dl className="mt-8 grid gap-4 sm:grid-cols-2">

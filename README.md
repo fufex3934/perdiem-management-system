@@ -91,6 +91,24 @@ pnpm --filter @perdiem/backend test:e2e
 - [x] Next.js frontend with API client
 - [x] Unit & integration tests
 
+## Phase 8 — Analytics (Complete)
+
+- [x] Tenant-wide dashboard KPIs for managers and admins
+- [x] Personal analytics summary for employees (scoped to own data)
+- [x] Spend report with status and country breakdown
+- [x] Optional date range filtering on reports
+- [x] CSV export for managers and admins
+- [x] Frontend analytics page with dashboard cards and report tables
+- [x] Unit and E2E tests
+
+### Analytics API
+
+| Method | Endpoint | Permission | Description |
+|--------|----------|------------|-------------|
+| GET | `/api/v1/analytics/dashboard` | `analytics:read_own` | Dashboard KPIs (tenant or own scope) |
+| GET | `/api/v1/analytics/reports/spend` | `analytics:read_own` | Spend report with breakdowns |
+| GET | `/api/v1/analytics/reports/spend/export` | `analytics:export` | Export spend report as CSV |
+
 ## Phase 7 — Notifications (Complete)
 
 - [x] In-process event bus for domain events
@@ -241,7 +259,7 @@ pnpm --filter @perdiem/backend test:e2e
 | 5 | Approval Workflow | ✅ Complete |
 | 6 | Finance | ✅ Complete |
 | 7 | Notifications | ✅ Complete |
-| 8 | Analytics | Pending |
+| 8 | Analytics | ✅ Complete |
 | 9 | Security Hardening | Pending |
 | 10 | Production | Pending |
 

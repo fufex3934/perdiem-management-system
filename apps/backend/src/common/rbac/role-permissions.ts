@@ -26,6 +26,9 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     Permission.FINANCE_EXPORT,
     Permission.NOTIFICATIONS_READ,
     Permission.NOTIFICATIONS_WRITE,
+    Permission.ANALYTICS_READ,
+    Permission.ANALYTICS_READ_OWN,
+    Permission.ANALYTICS_EXPORT,
   ],
   [UserRole.MANAGER]: [
     Permission.USERS_READ,
@@ -47,6 +50,9 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     Permission.FINANCE_EXPORT,
     Permission.NOTIFICATIONS_READ,
     Permission.NOTIFICATIONS_WRITE,
+    Permission.ANALYTICS_READ,
+    Permission.ANALYTICS_READ_OWN,
+    Permission.ANALYTICS_EXPORT,
   ],
   [UserRole.EMPLOYEE]: [
     Permission.POLICIES_READ,
@@ -58,6 +64,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     Permission.FINANCE_READ,
     Permission.NOTIFICATIONS_READ,
     Permission.NOTIFICATIONS_WRITE,
+    Permission.ANALYTICS_READ_OWN,
   ],
 };
 

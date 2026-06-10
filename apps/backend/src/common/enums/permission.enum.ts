@@ -22,4 +22,7 @@ export enum Permission {
   FINANCE_EXPORT = 'finance:export',
   NOTIFICATIONS_READ = 'notifications:read',
   NOTIFICATIONS_WRITE = 'notifications:write',
+  ANALYTICS_READ = 'analytics:read',
+  ANALYTICS_READ_OWN = 'analytics:read_own',
+  ANALYTICS_EXPORT = 'analytics:export',
 }

@@ -14,6 +14,7 @@ import configuration from './infrastructure/config/configuration';
 import { validate } from './infrastructure/config/env.validation';
 import { DatabaseModule } from './infrastructure/database/database.module';
 import { LoggerModule } from './infrastructure/logging/logger.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { HealthModule } from './modules/health/health.module';
 import { PoliciesModule } from './modules/policies/policies.module';
@@ -40,6 +41,7 @@ import { UserModule } from './modules/users/user.module';
     TravelRequestsModule,
     FinanceModule,
     NotificationsModule,
+    AnalyticsModule,
     HealthModule,
   ],
   providers: [

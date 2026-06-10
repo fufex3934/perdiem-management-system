@@ -22,6 +22,9 @@ export const Permission = {
   FINANCE_EXPORT: 'finance:export',
   NOTIFICATIONS_READ: 'notifications:read',
   NOTIFICATIONS_WRITE: 'notifications:write',
+  ANALYTICS_READ: 'analytics:read',
+  ANALYTICS_READ_OWN: 'analytics:read_own',
+  ANALYTICS_EXPORT: 'analytics:export',
 } as const;
 
 export type Permission = (typeof Permission)[keyof typeof Permission];
@@ -56,6 +59,9 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     Permission.FINANCE_EXPORT,
     Permission.NOTIFICATIONS_READ,
     Permission.NOTIFICATIONS_WRITE,
+    Permission.ANALYTICS_READ,
+    Permission.ANALYTICS_READ_OWN,
+    Permission.ANALYTICS_EXPORT,
   ],
   [UserRole.EMPLOYEE]: [
     Permission.POLICIES_READ,
@@ -67,6 +73,7 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     Permission.FINANCE_READ,
     Permission.NOTIFICATIONS_READ,
     Permission.NOTIFICATIONS_WRITE,
+    Permission.ANALYTICS_READ_OWN,
   ],
 };
 
@@ -120,4 +127,16 @@ export function canProcessFinance(role: string): boolean {
 
 export function canExportFinance(role: string): boolean {
   return hasPermission(role, Permission.FINANCE_EXPORT);
+}
+
+export function canViewAnalytics(role: string): boolean {
+  return hasPermission(role, Permission.ANALYTICS_READ_OWN);
+}
+
+export function canReadAllAnalytics(role: string): boolean {
+  return hasPermission(role, Permission.ANALYTICS_READ);
+}
+
+export function canExportAnalytics(role: string): boolean {
+  return hasPermission(role, Permission.ANALYTICS_EXPORT);
 }
