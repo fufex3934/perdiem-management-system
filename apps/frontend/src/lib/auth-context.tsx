@@ -15,7 +15,14 @@ import {
   getStoredSession,
   storeSession,
 } from './auth-storage';
-import { canManageUsers, hasPermission, isTenantAdmin, Permission } from './permissions';
+import {
+  canCalculatePerDiem,
+  canManagePolicies,
+  canManageUsers,
+  hasPermission,
+  isTenantAdmin,
+  Permission,
+} from './permissions';
 import type { AuthSession, AuthUser, LoginInput, RegisterTenantInput } from './auth-types';
 
 interface AuthContextValue {
@@ -26,6 +33,8 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   isTenantAdmin: boolean;
   canManageUsers: boolean;
+  canManagePolicies: boolean;
+  canCalculatePerDiem: boolean;
   hasPermission: (permission: Permission) => boolean;
   login: (input: LoginInput) => Promise<void>;
   registerTenant: (input: RegisterTenantInput) => Promise<void>;
@@ -91,6 +100,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isAuthenticated: Boolean(session?.tokens.accessToken),
       isTenantAdmin: isTenantAdmin(role),
       canManageUsers: canManageUsers(role),
+      canManagePolicies: canManagePolicies(role),
+      canCalculatePerDiem: canCalculatePerDiem(role),
       hasPermission: (permission: Permission) => hasPermission(role, permission),
       login,
       registerTenant,

@@ -91,6 +91,26 @@ pnpm --filter @perdiem/backend test:e2e
 - [x] Next.js frontend with API client
 - [x] Unit & integration tests
 
+## Phase 3 — Policy Engine (Complete)
+
+- [x] Per diem policy model (country, role, rate, currency, priority)
+- [x] Policy CRUD API with tenant isolation
+- [x] Calculation engine with role-specific rule matching
+- [x] RBAC permissions for policy management
+- [x] Frontend policies page with calculator
+- [x] Unit and E2E tests
+
+### Policy API
+
+| Method | Endpoint | Permission | Description |
+|--------|----------|------------|-------------|
+| POST | `/api/v1/policies` | `policies:write` | Create policy |
+| GET | `/api/v1/policies` | `policies:read` | List policies |
+| GET | `/api/v1/policies/:id` | `policies:read` | Get policy |
+| PATCH | `/api/v1/policies/:id` | `policies:write` | Update policy |
+| DELETE | `/api/v1/policies/:id` | `policies:delete` | Delete policy |
+| POST | `/api/v1/policies/calculate` | `policies:calculate` | Calculate per diem |
+
 ## Phase 2 — User Management + RBAC (Complete)
 
 - [x] Permission-based RBAC (`RolesGuard`, `PermissionsGuard`)
@@ -141,7 +161,7 @@ pnpm --filter @perdiem/backend test:e2e
 | 0 | Foundation | ✅ Complete |
 | 1 | Auth + Tenant | ✅ Complete |
 | 2 | User Management + RBAC | ✅ Complete |
-| 3 | Policy Engine | Pending |
+| 3 | Policy Engine | ✅ Complete |
 | 4 | Travel Request | Pending |
 | 5 | Approval Workflow | Pending |
 | 6 | Finance | Pending |

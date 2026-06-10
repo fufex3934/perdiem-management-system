@@ -19,8 +19,11 @@ describe('Role Permissions', () => {
     expect(permissions).not.toContain(Permission.USERS_DELETE);
   });
 
-  it('should grant no user permissions to employee', () => {
-    expect(getPermissionsForRole(UserRole.EMPLOYEE)).toEqual([]);
+  it('should grant policy read/calculate to employee', () => {
+    const permissions = getPermissionsForRole(UserRole.EMPLOYEE);
+    expect(permissions).toContain(Permission.POLICIES_READ);
+    expect(permissions).toContain(Permission.POLICIES_CALCULATE);
+    expect(permissions).not.toContain(Permission.POLICIES_WRITE);
   });
 
   it('should evaluate permission checks correctly', () => {

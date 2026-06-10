@@ -8,13 +8,23 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     Permission.USERS_INVITE,
     Permission.USERS_DELETE,
     Permission.USERS_MANAGE_ROLES,
+    Permission.POLICIES_READ,
+    Permission.POLICIES_WRITE,
+    Permission.POLICIES_DELETE,
+    Permission.POLICIES_CALCULATE,
   ],
   [UserRole.MANAGER]: [
     Permission.USERS_READ,
     Permission.USERS_WRITE,
     Permission.USERS_INVITE,
+    Permission.POLICIES_READ,
+    Permission.POLICIES_WRITE,
+    Permission.POLICIES_CALCULATE,
   ],
-  [UserRole.EMPLOYEE]: [],
+  [UserRole.EMPLOYEE]: [
+    Permission.POLICIES_READ,
+    Permission.POLICIES_CALCULATE,
+  ],
 };
 
 export function getPermissionsForRole(role: UserRole): Permission[] {

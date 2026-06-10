@@ -4,6 +4,10 @@ export const Permission = {
   USERS_INVITE: 'users:invite',
   USERS_DELETE: 'users:delete',
   USERS_MANAGE_ROLES: 'users:manage_roles',
+  POLICIES_READ: 'policies:read',
+  POLICIES_WRITE: 'policies:write',
+  POLICIES_DELETE: 'policies:delete',
+  POLICIES_CALCULATE: 'policies:calculate',
 } as const;
 
 export type Permission = (typeof Permission)[keyof typeof Permission];
@@ -22,8 +26,14 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     Permission.USERS_READ,
     Permission.USERS_WRITE,
     Permission.USERS_INVITE,
+    Permission.POLICIES_READ,
+    Permission.POLICIES_WRITE,
+    Permission.POLICIES_CALCULATE,
   ],
-  [UserRole.EMPLOYEE]: [],
+  [UserRole.EMPLOYEE]: [
+    Permission.POLICIES_READ,
+    Permission.POLICIES_CALCULATE,
+  ],
 };
 
 export function getPermissionsForRole(role: string): Permission[] {
@@ -40,4 +50,12 @@ export function isTenantAdmin(role: string): boolean {
 
 export function canManageUsers(role: string): boolean {
   return hasPermission(role, Permission.USERS_READ);
+}
+
+export function canManagePolicies(role: string): boolean {
+  return hasPermission(role, Permission.POLICIES_WRITE);
+}
+
+export function canCalculatePerDiem(role: string): boolean {
+  return hasPermission(role, Permission.POLICIES_CALCULATE);
 }
