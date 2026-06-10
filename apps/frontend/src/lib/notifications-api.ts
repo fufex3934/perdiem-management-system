@@ -32,9 +32,11 @@ function authOptions(token: string, tenantId: string) {
 export async function listNotifications(
   token: string,
   tenantId: string,
-  params?: { unreadOnly?: boolean },
+  params?: { page?: number; limit?: number; unreadOnly?: boolean },
 ): Promise<PaginatedNotifications> {
   const query = new URLSearchParams();
+  if (params?.page) query.set('page', String(params.page));
+  if (params?.limit) query.set('limit', String(params.limit));
   if (params?.unreadOnly) {
     query.set('unreadOnly', 'true');
   }

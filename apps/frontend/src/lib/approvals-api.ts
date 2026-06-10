@@ -29,9 +29,15 @@ function authOptions(token: string, tenantId: string) {
 export async function listPendingApprovals(
   token: string,
   tenantId: string,
+  params?: { page?: number; limit?: number },
 ): Promise<PaginatedPendingApprovals> {
+  const search = new URLSearchParams();
+  if (params?.page) search.set('page', String(params.page));
+  if (params?.limit) search.set('limit', String(params.limit));
+  const query = search.toString();
+
   const response = await apiClient.get<PaginatedPendingApprovals>(
-    '/approvals/pending',
+    `/approvals/pending${query ? `?${query}` : ''}`,
     authOptions(token, tenantId),
   );
   return response.data;

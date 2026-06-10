@@ -100,9 +100,15 @@ function authOptions(token: string, tenantId: string) {
 export async function listPolicies(
   token: string,
   tenantId: string,
+  params?: { page?: number; limit?: number },
 ): Promise<PaginatedPolicies> {
+  const search = new URLSearchParams();
+  if (params?.page) search.set('page', String(params.page));
+  if (params?.limit) search.set('limit', String(params.limit));
+  const query = search.toString();
+
   const response = await apiClient.get<PaginatedPolicies>(
-    '/policies',
+    `/policies${query ? `?${query}` : ''}`,
     authOptions(token, tenantId),
   );
   return response.data;

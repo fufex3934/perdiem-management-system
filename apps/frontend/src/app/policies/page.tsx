@@ -1,8 +1,10 @@
 'use client';
 
 import { Calculator, FileText } from 'lucide-react';
-import { FormEvent, useCallback, useEffect, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { AppShell } from '@/components/layout/app-shell';
+import { ConfirmDialog } from '@/components/shared/confirm-dialog';
+import { ListPagination } from '@/components/shared/list-pagination';
 import { PolicyEditDialog } from '@/components/shared/policy-edit-dialog';
 import { PolicyVersionDialog } from '@/components/shared/policy-version-dialog';
 import { EmptyState } from '@/components/shared/empty-state';
@@ -26,6 +28,8 @@ import {
 import { useRequireAuth } from '@/hooks/use-require-auth';
 import { UserRole } from '@/lib/permissions';
 import type { CalculationResult, Policy } from '@/lib/policies-api';
+import { getApiErrorMessage } from '@/lib/api-client';
+import { DEFAULT_PAGE_SIZE, INITIAL_PAGINATION, type PaginationMeta } from '@/lib/pagination';
 import * as policiesApi from '@/lib/policies-api';
 
 export default function PoliciesPage() {
@@ -37,13 +41,27 @@ export default function PoliciesPage() {
   const [loading, setLoading] = useState(true);
   const [historyPolicy, setHistoryPolicy] = useState<Policy | null>(null);
   const [editPolicy, setEditPolicy] = useState<Policy | null>(null);
+  const [policyToDelete, setPolicyToDelete] = useState<Policy | null>(null);
+  const [confirmLoading, setConfirmLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState<PaginationMeta>(INITIAL_PAGINATION);
+  const createInFlight = useRef(false);
 
   const loadPolicies = useCallback(async () => {
     if (!auth.accessToken || !auth.tenantId) return;
-    const result = await policiesApi.listPolicies(auth.accessToken, auth.tenantId);
+    const result = await policiesApi.listPolicies(auth.accessToken, auth.tenantId, {
+      page,
+      limit: DEFAULT_PAGE_SIZE,
+    });
     setPolicies(result.items);
+    setPagination({
+      page: result.page,
+      limit: result.limit,
+      total: result.total,
+      totalPages: result.totalPages,
+    });
     setLoading(false);
-  }, [auth.accessToken, auth.tenantId]);
+  }, [auth.accessToken, auth.tenantId, page]);
 
   useEffect(() => {
     if (auth.ready) loadPolicies().catch((err: Error) => setError(err.message));
@@ -51,12 +69,21 @@ export default function PoliciesPage() {
 
   async function handleCreatePolicy(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!auth.accessToken || !auth.tenantId || !auth.canManagePolicies) return;
+    if (
+      !auth.accessToken ||
+      !auth.tenantId ||
+      !auth.canManagePolicies ||
+      createInFlight.current
+    ) {
+      return;
+    }
 
     setError(null);
+    createInFlight.current = true;
     setIsSubmitting(true);
 
-    const formData = new FormData(event.currentTarget);
+    const form = event.currentTarget;
+    const formData = new FormData(form);
     const roleValue = String(formData.get('role'));
 
     try {
@@ -69,11 +96,16 @@ export default function PoliciesPage() {
         priority: Number(formData.get('priority') || 0),
         description: String(formData.get('description') || ''),
       });
-      event.currentTarget.reset();
-      await loadPolicies();
+      form.reset();
+      if (page === 1) {
+        await loadPolicies();
+      } else {
+        setPage(1);
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create policy');
+      setError(getApiErrorMessage(err, 'Failed to create policy'));
     } finally {
+      createInFlight.current = false;
       setIsSubmitting(false);
     }
   }
@@ -102,14 +134,25 @@ export default function PoliciesPage() {
     }
   }
 
-  async function handleDeletePolicy(policyId: string) {
-    if (!auth.accessToken || !auth.tenantId || !auth.canDeletePolicies) return;
+  async function confirmDeletePolicy() {
+    if (!policyToDelete || !auth.accessToken || !auth.tenantId || !auth.canDeletePolicies) {
+      return;
+    }
+
     setError(null);
+    setConfirmLoading(true);
     try {
-      await policiesApi.deletePolicy(auth.accessToken, auth.tenantId, policyId);
-      await loadPolicies();
+      await policiesApi.deletePolicy(auth.accessToken, auth.tenantId, policyToDelete.id);
+      setPolicyToDelete(null);
+      if (policies.length === 1 && page > 1) {
+        setPage(page - 1);
+      } else {
+        await loadPolicies();
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete policy');
+      setError(getApiErrorMessage(err, 'Failed to delete policy'));
+    } finally {
+      setConfirmLoading(false);
     }
   }
 
@@ -166,7 +209,7 @@ export default function PoliciesPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="role">Role</Label>
-                    <Select id="role" name="role" defaultValue={UserRole.EMPLOYEE}>
+                    <Select id="role" name="role" defaultValue="all">
                       <option value="all">All roles (default)</option>
                       <option value={UserRole.EMPLOYEE}>Employee</option>
                       <option value={UserRole.MANAGER}>Manager</option>
@@ -265,6 +308,7 @@ export default function PoliciesPage() {
                       <TableCell>
                         {policy.dailyRate} {policy.currency}
                       </TableCell>
+                      <TableCell>{policy.priority}</TableCell>
                       <TableCell>{policy.version ?? 1}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
@@ -289,7 +333,7 @@ export default function PoliciesPage() {
                               variant="ghost"
                               size="sm"
                               className="text-destructive hover:text-destructive"
-                              onClick={() => handleDeletePolicy(policy.id)}
+                              onClick={() => setPolicyToDelete(policy)}
                             >
                               Delete
                             </Button>
@@ -301,8 +345,28 @@ export default function PoliciesPage() {
                 </TableBody>
               </Table>
             )}
+            <ListPagination
+              page={pagination.page}
+              totalPages={pagination.totalPages}
+              total={pagination.total}
+              limit={pagination.limit}
+              onPageChange={setPage}
+            />
           </CardContent>
         </Card>
+        <ConfirmDialog
+          open={policyToDelete !== null}
+          onOpenChange={(open) => !open && !confirmLoading && setPolicyToDelete(null)}
+          title="Delete policy?"
+          description={
+            policyToDelete
+              ? `"${policyToDelete.name}" will be removed. Travel requests that already used this rate are not affected.`
+              : ''
+          }
+          confirmLabel="Delete"
+          loading={confirmLoading}
+          onConfirm={confirmDeletePolicy}
+        />
         <PolicyEditDialog
           open={editPolicy !== null}
           onOpenChange={(open) => !open && setEditPolicy(null)}

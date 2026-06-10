@@ -4,6 +4,8 @@ import { ClipboardCheck } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { AppShell } from '@/components/layout/app-shell';
 import { ApprovalAuditDialog } from '@/components/shared/approval-audit-dialog';
+import { ConfirmDialog } from '@/components/shared/confirm-dialog';
+import { ListPagination } from '@/components/shared/list-pagination';
 import { EmptyState } from '@/components/shared/empty-state';
 import { ErrorAlert } from '@/components/shared/error-alert';
 import { PageHeader } from '@/components/shared/page-header';
@@ -13,6 +15,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useRequireAuth } from '@/hooks/use-require-auth';
+import { getApiErrorMessage } from '@/lib/api-client';
+import { DEFAULT_PAGE_SIZE, INITIAL_PAGINATION, type PaginationMeta } from '@/lib/pagination';
 import * as approvalsApi from '@/lib/approvals-api';
 import type { TravelRequest } from '@/lib/travel-requests-api';
 
@@ -23,12 +27,27 @@ export default function ApprovalsPage() {
   const [actingOn, setActingOn] = useState<string | null>(null);
   const [comments, setComments] = useState<Record<string, string>>({});
   const [auditRequest, setAuditRequest] = useState<TravelRequest | null>(null);
+  const [requestToReject, setRequestToReject] = useState<TravelRequest | null>(null);
+  const [confirmLoading, setConfirmLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState<PaginationMeta>(INITIAL_PAGINATION);
+  const [loading, setLoading] = useState(true);
 
   const loadPending = useCallback(async () => {
     if (!auth.accessToken || !auth.tenantId) return;
-    const result = await approvalsApi.listPendingApprovals(auth.accessToken, auth.tenantId);
+    const result = await approvalsApi.listPendingApprovals(auth.accessToken, auth.tenantId, {
+      page,
+      limit: DEFAULT_PAGE_SIZE,
+    });
     setPending(result.items);
-  }, [auth.accessToken, auth.tenantId]);
+    setPagination({
+      page: result.page,
+      limit: result.limit,
+      total: result.total,
+      totalPages: result.totalPages,
+    });
+    setLoading(false);
+  }, [auth.accessToken, auth.tenantId, page]);
 
   useEffect(() => {
     if (auth.ready) loadPending().catch((err: Error) => setError(err.message));
@@ -41,22 +60,29 @@ export default function ApprovalsPage() {
       await approvalsApi.approveTravelRequest(auth.accessToken, auth.tenantId, requestId, comments[requestId]);
       await loadPending();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Approval failed');
+      setError(getApiErrorMessage(err, 'Approval failed'));
     } finally {
       setActingOn(null);
     }
   }
 
-  async function handleReject(requestId: string) {
-    if (!auth.accessToken || !auth.tenantId) return;
-    setActingOn(requestId);
+  async function confirmReject() {
+    if (!requestToReject || !auth.accessToken || !auth.tenantId) return;
+
+    setConfirmLoading(true);
     try {
-      await approvalsApi.rejectTravelRequest(auth.accessToken, auth.tenantId, requestId, comments[requestId]);
+      await approvalsApi.rejectTravelRequest(
+        auth.accessToken,
+        auth.tenantId,
+        requestToReject.id,
+        comments[requestToReject.id],
+      );
+      setRequestToReject(null);
       await loadPending();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Rejection failed');
+      setError(getApiErrorMessage(err, 'Rejection failed'));
     } finally {
-      setActingOn(null);
+      setConfirmLoading(false);
     }
   }
 
@@ -72,7 +98,9 @@ export default function ApprovalsPage() {
 
         {error && <ErrorAlert message={error} />}
 
-        {pending.length === 0 ? (
+        {loading ? (
+          <PageLoading />
+        ) : pending.length === 0 ? (
           <EmptyState
             icon={ClipboardCheck}
             title="All caught up"
@@ -110,15 +138,40 @@ export default function ApprovalsPage() {
                     <Button onClick={() => handleApprove(request.id)} disabled={isActing}>
                       {isActing ? 'Processing...' : 'Approve'}
                     </Button>
-                    <Button variant="destructive" onClick={() => handleReject(request.id)} disabled={isActing}>
+                    <Button
+                      variant="destructive"
+                      onClick={() => setRequestToReject(request)}
+                      disabled={isActing}
+                    >
                       Reject
                     </Button>
                   </CardContent>
                 </Card>
               );
             })}
+            <ListPagination
+              page={pagination.page}
+              totalPages={pagination.totalPages}
+              total={pagination.total}
+              limit={pagination.limit}
+              onPageChange={setPage}
+            />
           </div>
         )}
+
+        <ConfirmDialog
+          open={requestToReject !== null}
+          onOpenChange={(open) => !open && !confirmLoading && setRequestToReject(null)}
+          title="Reject travel request?"
+          description={
+            requestToReject
+              ? `"${requestToReject.title}" will be rejected and returned to the requester.`
+              : ''
+          }
+          confirmLabel="Reject"
+          loading={confirmLoading}
+          onConfirm={confirmReject}
+        />
 
         <ApprovalAuditDialog
           open={auditRequest !== null}

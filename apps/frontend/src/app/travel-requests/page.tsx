@@ -4,6 +4,8 @@ import { MapPin } from 'lucide-react';
 import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { AppShell } from '@/components/layout/app-shell';
 import { ApprovalAuditDialog } from '@/components/shared/approval-audit-dialog';
+import { ConfirmDialog } from '@/components/shared/confirm-dialog';
+import { ListPagination } from '@/components/shared/list-pagination';
 import { EmptyState } from '@/components/shared/empty-state';
 import { ErrorAlert } from '@/components/shared/error-alert';
 import { PageHeader } from '@/components/shared/page-header';
@@ -22,23 +24,42 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useRequireAuth } from '@/hooks/use-require-auth';
+import { getApiErrorMessage } from '@/lib/api-client';
+import { DEFAULT_PAGE_SIZE, INITIAL_PAGINATION, type PaginationMeta } from '@/lib/pagination';
 import type { TravelRequest } from '@/lib/travel-requests-api';
 import * as travelRequestsApi from '@/lib/travel-requests-api';
+
+type PendingAction =
+  | { type: 'submit'; request: TravelRequest }
+  | { type: 'cancel'; request: TravelRequest };
 
 export default function TravelRequestsPage() {
   const auth = useRequireAuth();
   const [requests, setRequests] = useState<TravelRequest[]>([]);
   const [auditRequest, setAuditRequest] = useState<TravelRequest | null>(null);
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
+  const [confirmLoading, setConfirmLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState<PaginationMeta>(INITIAL_PAGINATION);
 
   const loadRequests = useCallback(async () => {
     if (!auth.accessToken || !auth.tenantId) return;
-    const result = await travelRequestsApi.listTravelRequests(auth.accessToken, auth.tenantId);
+    const result = await travelRequestsApi.listTravelRequests(auth.accessToken, auth.tenantId, {
+      page,
+      limit: DEFAULT_PAGE_SIZE,
+    });
     setRequests(result.items);
+    setPagination({
+      page: result.page,
+      limit: result.limit,
+      total: result.total,
+      totalPages: result.totalPages,
+    });
     setLoading(false);
-  }, [auth.accessToken, auth.tenantId]);
+  }, [auth.accessToken, auth.tenantId, page]);
 
   useEffect(() => {
     if (auth.ready) {
@@ -62,11 +83,43 @@ export default function TravelRequestsPage() {
         endDate: String(formData.get('endDate')),
       });
       event.currentTarget.reset();
-      await loadRequests();
+      if (page === 1) {
+        await loadRequests();
+      } else {
+        setPage(1);
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create travel request');
+      setError(getApiErrorMessage(err, 'Failed to create travel request'));
     } finally {
       setIsSubmitting(false);
+    }
+  }
+
+  async function confirmPendingAction() {
+    if (!pendingAction || !auth.accessToken || !auth.tenantId) return;
+
+    setError(null);
+    setConfirmLoading(true);
+    try {
+      if (pendingAction.type === 'submit') {
+        await travelRequestsApi.submitTravelRequest(
+          auth.accessToken,
+          auth.tenantId,
+          pendingAction.request.id,
+        );
+      } else {
+        await travelRequestsApi.cancelTravelRequest(
+          auth.accessToken,
+          auth.tenantId,
+          pendingAction.request.id,
+        );
+      }
+      setPendingAction(null);
+      await loadRequests();
+    } catch (err) {
+      setError(getApiErrorMessage(err, 'Action failed'));
+    } finally {
+      setConfirmLoading(false);
     }
   }
 
@@ -131,7 +184,7 @@ export default function TravelRequestsPage() {
         <Card>
           <CardHeader>
             <CardTitle>All requests</CardTitle>
-            <CardDescription>{requests.length} total</CardDescription>
+            <CardDescription>{pagination.total} total</CardDescription>
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -179,12 +232,21 @@ export default function TravelRequestsPage() {
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
                             {canAct && request.status === 'draft' && (
-                              <Button variant="ghost" size="sm" onClick={() => travelRequestsApi.submitTravelRequest(auth.accessToken!, auth.tenantId!, request.id).then(loadRequests)}>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setPendingAction({ type: 'submit', request })}
+                              >
                                 Submit
                               </Button>
                             )}
                             {canAct && ['draft', 'pending_approval'].includes(request.status) && (
-                              <Button variant="ghost" size="sm" className="text-destructive" onClick={() => travelRequestsApi.cancelTravelRequest(auth.accessToken!, auth.tenantId!, request.id).then(loadRequests)}>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-destructive"
+                                onClick={() => setPendingAction({ type: 'cancel', request })}
+                              >
                                 Cancel
                               </Button>
                             )}
@@ -201,8 +263,32 @@ export default function TravelRequestsPage() {
                 </TableBody>
               </Table>
             )}
+            <ListPagination
+              page={pagination.page}
+              totalPages={pagination.totalPages}
+              total={pagination.total}
+              limit={pagination.limit}
+              onPageChange={setPage}
+            />
           </CardContent>
         </Card>
+
+        <ConfirmDialog
+          open={pendingAction !== null}
+          onOpenChange={(open) => !open && !confirmLoading && setPendingAction(null)}
+          title={pendingAction?.type === 'submit' ? 'Submit travel request?' : 'Cancel travel request?'}
+          description={
+            pendingAction?.type === 'submit'
+              ? `"${pendingAction.request.title}" will enter the approval workflow and can no longer be edited as a draft.`
+              : pendingAction
+                ? `"${pendingAction.request.title}" will be cancelled. This action cannot be undone.`
+                : ''
+          }
+          confirmLabel={pendingAction?.type === 'submit' ? 'Submit' : 'Cancel request'}
+          variant={pendingAction?.type === 'cancel' ? 'destructive' : 'default'}
+          loading={confirmLoading}
+          onConfirm={confirmPendingAction}
+        />
 
         <ApprovalAuditDialog
           open={auditRequest !== null}

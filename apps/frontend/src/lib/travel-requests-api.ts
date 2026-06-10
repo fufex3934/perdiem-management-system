@@ -63,9 +63,16 @@ function authOptions(token: string, tenantId: string) {
 export async function listTravelRequests(
   token: string,
   tenantId: string,
+  params?: { page?: number; limit?: number; status?: string },
 ): Promise<PaginatedTravelRequests> {
+  const search = new URLSearchParams();
+  if (params?.page) search.set('page', String(params.page));
+  if (params?.limit) search.set('limit', String(params.limit));
+  if (params?.status) search.set('status', params.status);
+  const query = search.toString();
+
   const response = await apiClient.get<PaginatedTravelRequests>(
-    '/travel-requests',
+    `/travel-requests${query ? `?${query}` : ''}`,
     authOptions(token, tenantId),
   );
   return response.data;

@@ -28,6 +28,21 @@ export class ApiClientError extends Error {
   }
 }
 
+export function getApiErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof ApiClientError) {
+    if (error.body.code === 'POLICY_CONFLICT') {
+      return `${error.body.message} Use a different name, country, or role.`;
+    }
+    return error.body.message || fallback;
+  }
+
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return fallback;
+}
+
 export interface RequestOptions extends Omit<RequestInit, 'body'> {
   body?: unknown;
   tenantId?: string;

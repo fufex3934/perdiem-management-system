@@ -3,6 +3,8 @@
 import { CreditCard } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { AppShell } from '@/components/layout/app-shell';
+import { ConfirmDialog } from '@/components/shared/confirm-dialog';
+import { ListPagination } from '@/components/shared/list-pagination';
 import { EmptyState } from '@/components/shared/empty-state';
 import { ErrorAlert } from '@/components/shared/error-alert';
 import { PageHeader } from '@/components/shared/page-header';
@@ -21,8 +23,14 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useRequireAuth } from '@/hooks/use-require-auth';
+import { getApiErrorMessage } from '@/lib/api-client';
 import type { Payment } from '@/lib/finance-api';
 import * as financeApi from '@/lib/finance-api';
+import { DEFAULT_PAGE_SIZE, INITIAL_PAGINATION, type PaginationMeta } from '@/lib/pagination';
+
+type PendingPaymentAction =
+  | { type: 'paid'; payment: Payment }
+  | { type: 'failed'; payment: Payment };
 
 export default function FinancePage() {
   const auth = useRequireAuth({ check: (a) => a.canViewFinance });
@@ -30,49 +38,63 @@ export default function FinancePage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [actingOn, setActingOn] = useState<string | null>(null);
+  const [pendingAction, setPendingAction] = useState<PendingPaymentAction | null>(null);
+  const [confirmLoading, setConfirmLoading] = useState(false);
   const [references, setReferences] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState<PaginationMeta>(INITIAL_PAGINATION);
 
   const loadPayments = useCallback(async () => {
     if (!auth.accessToken || !auth.tenantId) return;
     const result = await financeApi.listPayments(auth.accessToken, auth.tenantId, {
+      page,
+      limit: DEFAULT_PAGE_SIZE,
       status: statusFilter || undefined,
     });
     setPayments(result.items);
+    setPagination({
+      page: result.page,
+      limit: result.limit,
+      total: result.total,
+      totalPages: result.totalPages,
+    });
     setLoading(false);
-  }, [auth.accessToken, auth.tenantId, statusFilter]);
+  }, [auth.accessToken, auth.tenantId, page, statusFilter]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [statusFilter]);
 
   useEffect(() => {
     if (auth.ready) loadPayments().catch((err: Error) => setError(err.message));
   }, [auth.ready, loadPayments]);
 
-  async function handleMarkPaid(paymentId: string) {
-    if (!auth.accessToken || !auth.tenantId || !auth.canProcessFinance) return;
-    setActingOn(paymentId);
-    try {
-      await financeApi.markPaymentPaid(auth.accessToken, auth.tenantId, paymentId, {
-        paymentReference: references[paymentId],
-      });
-      await loadPayments();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to mark paid');
-    } finally {
-      setActingOn(null);
+  async function confirmPaymentAction() {
+    if (!pendingAction || !auth.accessToken || !auth.tenantId || !auth.canProcessFinance) {
+      return;
     }
-  }
 
-  async function handleMarkFailed(paymentId: string) {
-    if (!auth.accessToken || !auth.tenantId || !auth.canProcessFinance) return;
+    const paymentId = pendingAction.payment.id;
     setActingOn(paymentId);
+    setConfirmLoading(true);
     try {
-      await financeApi.markPaymentFailed(auth.accessToken, auth.tenantId, paymentId, {
-        notes: references[paymentId],
-      });
+      if (pendingAction.type === 'paid') {
+        await financeApi.markPaymentPaid(auth.accessToken, auth.tenantId, paymentId, {
+          paymentReference: references[paymentId],
+        });
+      } else {
+        await financeApi.markPaymentFailed(auth.accessToken, auth.tenantId, paymentId, {
+          notes: references[paymentId],
+        });
+      }
+      setPendingAction(null);
       await loadPayments();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to mark failed');
+      setError(getApiErrorMessage(err, 'Payment update failed'));
     } finally {
       setActingOn(null);
+      setConfirmLoading(false);
     }
   }
 
@@ -164,10 +186,19 @@ export default function FinancePage() {
                                   setReferences((p) => ({ ...p, [payment.id]: e.target.value }))
                                 }
                               />
-                              <Button size="sm" disabled={actingOn === payment.id} onClick={() => handleMarkPaid(payment.id)}>
+                              <Button
+                                size="sm"
+                                disabled={actingOn === payment.id}
+                                onClick={() => setPendingAction({ type: 'paid', payment })}
+                              >
                                 Paid
                               </Button>
-                              <Button size="sm" variant="destructive" disabled={actingOn === payment.id} onClick={() => handleMarkFailed(payment.id)}>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                disabled={actingOn === payment.id}
+                                onClick={() => setPendingAction({ type: 'failed', payment })}
+                              >
                                 Fail
                               </Button>
                             </div>
@@ -181,8 +212,32 @@ export default function FinancePage() {
                 </TableBody>
               </Table>
             )}
+            <ListPagination
+              page={pagination.page}
+              totalPages={pagination.totalPages}
+              total={pagination.total}
+              limit={pagination.limit}
+              onPageChange={setPage}
+            />
           </CardContent>
         </Card>
+
+        <ConfirmDialog
+          open={pendingAction !== null}
+          onOpenChange={(open) => !open && !confirmLoading && setPendingAction(null)}
+          title={pendingAction?.type === 'paid' ? 'Mark payment as paid?' : 'Mark payment as failed?'}
+          description={
+            pendingAction
+              ? pendingAction.type === 'paid'
+                ? `Confirm that ${pendingAction.payment.amount} ${pendingAction.payment.currency} for "${pendingAction.payment.travelTitle}" has been paid.`
+                : `Mark the ${pendingAction.payment.amount} ${pendingAction.payment.currency} payment for "${pendingAction.payment.travelTitle}" as failed.`
+              : ''
+          }
+          confirmLabel={pendingAction?.type === 'paid' ? 'Mark paid' : 'Mark failed'}
+          variant={pendingAction?.type === 'failed' ? 'destructive' : 'default'}
+          loading={confirmLoading}
+          onConfirm={confirmPaymentAction}
+        />
       </div>
     </AppShell>
   );

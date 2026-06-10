@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select } from '@/components/ui/select';
 import { UserRole } from '@/lib/permissions';
+import { getApiErrorMessage } from '@/lib/api-client';
 import type { Policy, UpdatePolicyInput } from '@/lib/policies-api';
 import * as policiesApi from '@/lib/policies-api';
 
@@ -72,7 +73,7 @@ export function PolicyEditDialog({
       onSaved();
       onOpenChange(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update policy');
+      setError(getApiErrorMessage(err, 'Failed to update policy'));
     } finally {
       setIsSubmitting(false);
     }

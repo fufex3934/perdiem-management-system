@@ -3,6 +3,7 @@
 import { Shield } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { AppShell } from '@/components/layout/app-shell';
+import { ListPagination } from '@/components/shared/list-pagination';
 import { EmptyState } from '@/components/shared/empty-state';
 import { ErrorAlert } from '@/components/shared/error-alert';
 import { PageHeader } from '@/components/shared/page-header';
@@ -19,6 +20,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useRequireAuth } from '@/hooks/use-require-auth';
+import { DEFAULT_PAGE_SIZE, INITIAL_PAGINATION, type PaginationMeta } from '@/lib/pagination';
 import type { SecurityAuditLog } from '@/lib/security-api';
 import * as securityApi from '@/lib/security-api';
 
@@ -40,24 +42,36 @@ const ACTION_LABELS: Record<string, string> = {
 export default function SecurityAuditLogsPage() {
   const auth = useRequireAuth({ check: (a) => a.canViewSecurityAudit });
   const [logs, setLogs] = useState<SecurityAuditLog[]>([]);
-  const [total, setTotal] = useState(0);
   const [actionFilter, setActionFilter] = useState('');
   const [successFilter, setSuccessFilter] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState<PaginationMeta>(INITIAL_PAGINATION);
 
   const loadLogs = useCallback(async () => {
     if (!auth.accessToken || !auth.tenantId) return;
 
     const result = await securityApi.listAuditLogs(auth.accessToken, auth.tenantId, {
+      page,
+      limit: DEFAULT_PAGE_SIZE,
       action: actionFilter || undefined,
       success: successFilter === '' ? undefined : successFilter === 'true',
     });
 
     setLogs(result.items);
-    setTotal(result.total);
+    setPagination({
+      page: result.page,
+      limit: result.limit,
+      total: result.total,
+      totalPages: result.totalPages,
+    });
     setLoading(false);
-  }, [auth.accessToken, auth.tenantId, actionFilter, successFilter]);
+  }, [auth.accessToken, auth.tenantId, page, actionFilter, successFilter]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [actionFilter, successFilter]);
 
   useEffect(() => {
     if (auth.ready) loadLogs().catch((err: Error) => setError(err.message));
@@ -70,7 +84,7 @@ export default function SecurityAuditLogsPage() {
       <div className="space-y-6">
         <PageHeader
           title="Security audit"
-          description={`${total} events recorded`}
+          description={`${pagination.total} events recorded`}
         />
 
         {error && <ErrorAlert message={error} />}
@@ -148,6 +162,13 @@ export default function SecurityAuditLogsPage() {
                 </TableBody>
               </Table>
             )}
+            <ListPagination
+              page={pagination.page}
+              totalPages={pagination.totalPages}
+              total={pagination.total}
+              limit={pagination.limit}
+              onPageChange={setPage}
+            />
           </CardContent>
         </Card>
       </div>

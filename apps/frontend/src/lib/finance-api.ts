@@ -41,11 +41,16 @@ function authOptions(token: string, tenantId: string) {
 export async function listPayments(
   token: string,
   tenantId: string,
-  params?: { status?: string },
+  params?: { page?: number; limit?: number; status?: string },
 ): Promise<PaginatedPayments> {
-  const query = params?.status ? `?status=${params.status}` : '';
+  const search = new URLSearchParams();
+  if (params?.page) search.set('page', String(params.page));
+  if (params?.limit) search.set('limit', String(params.limit));
+  if (params?.status) search.set('status', params.status);
+  const query = search.toString();
+
   const response = await apiClient.get<PaginatedPayments>(
-    `/finance/payments${query}`,
+    `/finance/payments${query ? `?${query}` : ''}`,
     authOptions(token, tenantId),
   );
   return response.data;

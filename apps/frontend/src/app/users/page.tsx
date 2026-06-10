@@ -3,6 +3,8 @@
 import { UserPlus, Users } from 'lucide-react';
 import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { AppShell } from '@/components/layout/app-shell';
+import { ConfirmDialog } from '@/components/shared/confirm-dialog';
+import { ListPagination } from '@/components/shared/list-pagination';
 import { EmptyState } from '@/components/shared/empty-state';
 import { ErrorAlert } from '@/components/shared/error-alert';
 import { PageHeader } from '@/components/shared/page-header';
@@ -24,6 +26,8 @@ import {
 import { useRequireAuth } from '@/hooks/use-require-auth';
 import type { AuthUser } from '@/lib/auth-types';
 import { UserRole } from '@/lib/permissions';
+import { getApiErrorMessage } from '@/lib/api-client';
+import { DEFAULT_PAGE_SIZE, INITIAL_PAGINATION, type PaginationMeta } from '@/lib/pagination';
 import type { CreateInviteResponse, Invite } from '@/lib/users-api';
 import * as usersApi from '@/lib/users-api';
 
@@ -35,17 +39,30 @@ export default function UsersPage() {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState<PaginationMeta>(INITIAL_PAGINATION);
+  const [inviteToRevoke, setInviteToRevoke] = useState<Invite | null>(null);
+  const [confirmLoading, setConfirmLoading] = useState(false);
 
   const loadData = useCallback(async () => {
     if (!auth.accessToken || !auth.tenantId) return;
     const [usersResult, invitesResult] = await Promise.all([
-      usersApi.listUsers(auth.accessToken, auth.tenantId),
+      usersApi.listUsers(auth.accessToken, auth.tenantId, {
+        page,
+        limit: DEFAULT_PAGE_SIZE,
+      }),
       usersApi.listInvites(auth.accessToken, auth.tenantId),
     ]);
     setUsers(usersResult.items);
+    setPagination({
+      page: usersResult.page,
+      limit: usersResult.limit,
+      total: usersResult.total,
+      totalPages: usersResult.totalPages,
+    });
     setInvites(invitesResult);
     setLoading(false);
-  }, [auth.accessToken, auth.tenantId]);
+  }, [auth.accessToken, auth.tenantId, page]);
 
   useEffect(() => {
     if (auth.ready) loadData().catch((err: Error) => setError(err.message));
@@ -78,10 +95,20 @@ export default function UsersPage() {
     }
   }
 
-  async function handleRevokeInvite(inviteId: string) {
-    if (!auth.accessToken || !auth.tenantId) return;
-    await usersApi.revokeInvite(auth.accessToken, auth.tenantId, inviteId);
-    await loadData();
+  async function confirmRevokeInvite() {
+    if (!inviteToRevoke || !auth.accessToken || !auth.tenantId) return;
+
+    setError(null);
+    setConfirmLoading(true);
+    try {
+      await usersApi.revokeInvite(auth.accessToken, auth.tenantId, inviteToRevoke.id);
+      setInviteToRevoke(null);
+      await loadData();
+    } catch (err) {
+      setError(getApiErrorMessage(err, 'Failed to revoke invite'));
+    } finally {
+      setConfirmLoading(false);
+    }
   }
 
   if (!auth.ready) return <PageLoading />;
@@ -173,7 +200,7 @@ export default function UsersPage() {
                         variant="ghost"
                         size="sm"
                         className="text-destructive hover:text-destructive"
-                        onClick={() => handleRevokeInvite(invite.id)}
+                        onClick={() => setInviteToRevoke(invite)}
                       >
                         Revoke
                       </Button>
@@ -225,8 +252,29 @@ export default function UsersPage() {
                 </TableBody>
               </Table>
             )}
+            <ListPagination
+              page={pagination.page}
+              totalPages={pagination.totalPages}
+              total={pagination.total}
+              limit={pagination.limit}
+              onPageChange={setPage}
+            />
           </CardContent>
         </Card>
+
+        <ConfirmDialog
+          open={inviteToRevoke !== null}
+          onOpenChange={(open) => !open && !confirmLoading && setInviteToRevoke(null)}
+          title="Revoke invite?"
+          description={
+            inviteToRevoke
+              ? `The invitation for ${inviteToRevoke.email} will be revoked and they will no longer be able to join.`
+              : ''
+          }
+          confirmLabel="Revoke"
+          loading={confirmLoading}
+          onConfirm={confirmRevokeInvite}
+        />
       </div>
     </AppShell>
   );
