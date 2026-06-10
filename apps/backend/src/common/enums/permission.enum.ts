@@ -8,4 +8,9 @@ export enum Permission {
   POLICIES_WRITE = 'policies:write',
   POLICIES_DELETE = 'policies:delete',
   POLICIES_CALCULATE = 'policies:calculate',
+  TRAVEL_REQUESTS_READ = 'travel_requests:read',
+  TRAVEL_REQUESTS_READ_ALL = 'travel_requests:read_all',
+  TRAVEL_REQUESTS_WRITE = 'travel_requests:write',
+  TRAVEL_REQUESTS_SUBMIT = 'travel_requests:submit',
+  TRAVEL_REQUESTS_CANCEL = 'travel_requests:cancel',
 }

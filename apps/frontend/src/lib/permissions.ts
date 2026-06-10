@@ -8,6 +8,11 @@ export const Permission = {
   POLICIES_WRITE: 'policies:write',
   POLICIES_DELETE: 'policies:delete',
   POLICIES_CALCULATE: 'policies:calculate',
+  TRAVEL_REQUESTS_READ: 'travel_requests:read',
+  TRAVEL_REQUESTS_READ_ALL: 'travel_requests:read_all',
+  TRAVEL_REQUESTS_WRITE: 'travel_requests:write',
+  TRAVEL_REQUESTS_SUBMIT: 'travel_requests:submit',
+  TRAVEL_REQUESTS_CANCEL: 'travel_requests:cancel',
 } as const;
 
 export type Permission = (typeof Permission)[keyof typeof Permission];
@@ -29,10 +34,19 @@ const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     Permission.POLICIES_READ,
     Permission.POLICIES_WRITE,
     Permission.POLICIES_CALCULATE,
+    Permission.TRAVEL_REQUESTS_READ,
+    Permission.TRAVEL_REQUESTS_READ_ALL,
+    Permission.TRAVEL_REQUESTS_WRITE,
+    Permission.TRAVEL_REQUESTS_SUBMIT,
+    Permission.TRAVEL_REQUESTS_CANCEL,
   ],
   [UserRole.EMPLOYEE]: [
     Permission.POLICIES_READ,
     Permission.POLICIES_CALCULATE,
+    Permission.TRAVEL_REQUESTS_READ,
+    Permission.TRAVEL_REQUESTS_WRITE,
+    Permission.TRAVEL_REQUESTS_SUBMIT,
+    Permission.TRAVEL_REQUESTS_CANCEL,
   ],
 };
 
@@ -58,4 +72,12 @@ export function canManagePolicies(role: string): boolean {
 
 export function canCalculatePerDiem(role: string): boolean {
   return hasPermission(role, Permission.POLICIES_CALCULATE);
+}
+
+export function canManageTravelRequests(role: string): boolean {
+  return hasPermission(role, Permission.TRAVEL_REQUESTS_WRITE);
+}
+
+export function canReadAllTravelRequests(role: string): boolean {
+  return hasPermission(role, Permission.TRAVEL_REQUESTS_READ_ALL);
 }

@@ -7,7 +7,17 @@ import { useAuth } from '@/lib/auth-context';
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { user, tenantId, isLoading, isAuthenticated, canManageUsers, canManagePolicies, canCalculatePerDiem, logout } = useAuth();
+  const {
+    user,
+    tenantId,
+    isLoading,
+    isAuthenticated,
+    canManageUsers,
+    canManagePolicies,
+    canCalculatePerDiem,
+    canManageTravelRequests,
+    logout,
+  } = useAuth();
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -43,7 +53,7 @@ export default function DashboardPage() {
       <div className="mx-auto max-w-5xl px-6 py-10">
         <div className="rounded-2xl border bg-white p-8 shadow-sm">
           <p className="text-sm font-medium uppercase tracking-wide text-blue-600">
-            Phase 3 — Policy Engine
+            Phase 4 — Travel Request
           </p>
           <h2 className="mt-2 text-2xl font-bold text-slate-900">
             Welcome, {user.firstName} {user.lastName}
@@ -65,6 +75,14 @@ export default function DashboardPage() {
                 className="inline-flex rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
               >
                 Per diem policies
+              </Link>
+            )}
+            {canManageTravelRequests && (
+              <Link
+                href="/travel-requests"
+                className="inline-flex rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              >
+                Travel requests
               </Link>
             )}
           </div>

@@ -12,6 +12,11 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     Permission.POLICIES_WRITE,
     Permission.POLICIES_DELETE,
     Permission.POLICIES_CALCULATE,
+    Permission.TRAVEL_REQUESTS_READ,
+    Permission.TRAVEL_REQUESTS_READ_ALL,
+    Permission.TRAVEL_REQUESTS_WRITE,
+    Permission.TRAVEL_REQUESTS_SUBMIT,
+    Permission.TRAVEL_REQUESTS_CANCEL,
   ],
   [UserRole.MANAGER]: [
     Permission.USERS_READ,
@@ -20,10 +25,19 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     Permission.POLICIES_READ,
     Permission.POLICIES_WRITE,
     Permission.POLICIES_CALCULATE,
+    Permission.TRAVEL_REQUESTS_READ,
+    Permission.TRAVEL_REQUESTS_READ_ALL,
+    Permission.TRAVEL_REQUESTS_WRITE,
+    Permission.TRAVEL_REQUESTS_SUBMIT,
+    Permission.TRAVEL_REQUESTS_CANCEL,
   ],
   [UserRole.EMPLOYEE]: [
     Permission.POLICIES_READ,
     Permission.POLICIES_CALCULATE,
+    Permission.TRAVEL_REQUESTS_READ,
+    Permission.TRAVEL_REQUESTS_WRITE,
+    Permission.TRAVEL_REQUESTS_SUBMIT,
+    Permission.TRAVEL_REQUESTS_CANCEL,
   ],
 };
 

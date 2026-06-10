@@ -26,6 +26,18 @@ describe('Role Permissions', () => {
     expect(permissions).not.toContain(Permission.POLICIES_WRITE);
   });
 
+  it('should grant travel request permissions to employee without read_all', () => {
+    const permissions = getPermissionsForRole(UserRole.EMPLOYEE);
+    expect(permissions).toContain(Permission.TRAVEL_REQUESTS_READ);
+    expect(permissions).toContain(Permission.TRAVEL_REQUESTS_WRITE);
+    expect(permissions).not.toContain(Permission.TRAVEL_REQUESTS_READ_ALL);
+  });
+
+  it('should grant read_all travel requests to manager', () => {
+    const permissions = getPermissionsForRole(UserRole.MANAGER);
+    expect(permissions).toContain(Permission.TRAVEL_REQUESTS_READ_ALL);
+  });
+
   it('should evaluate permission checks correctly', () => {
     expect(roleHasPermission(UserRole.MANAGER, Permission.USERS_READ)).toBe(true);
     expect(roleHasPermission(UserRole.EMPLOYEE, Permission.USERS_READ)).toBe(false);

@@ -18,7 +18,9 @@ import {
 import {
   canCalculatePerDiem,
   canManagePolicies,
+  canManageTravelRequests,
   canManageUsers,
+  canReadAllTravelRequests,
   hasPermission,
   isTenantAdmin,
   Permission,
@@ -35,6 +37,8 @@ interface AuthContextValue {
   canManageUsers: boolean;
   canManagePolicies: boolean;
   canCalculatePerDiem: boolean;
+  canManageTravelRequests: boolean;
+  canReadAllTravelRequests: boolean;
   hasPermission: (permission: Permission) => boolean;
   login: (input: LoginInput) => Promise<void>;
   registerTenant: (input: RegisterTenantInput) => Promise<void>;
@@ -102,6 +106,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       canManageUsers: canManageUsers(role),
       canManagePolicies: canManagePolicies(role),
       canCalculatePerDiem: canCalculatePerDiem(role),
+      canManageTravelRequests: canManageTravelRequests(role),
+      canReadAllTravelRequests: canReadAllTravelRequests(role),
       hasPermission: (permission: Permission) => hasPermission(role, permission),
       login,
       registerTenant,

@@ -24,7 +24,7 @@ export default async function HomePage() {
       <div className="mx-auto flex min-h-screen max-w-5xl flex-col items-center justify-center px-6 py-16">
         <div className="w-full max-w-2xl rounded-2xl border bg-white p-10 shadow-sm">
           <div className="mb-6 inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700">
-            Phase 3 — Policy Engine
+            Phase 4 — Travel Request
           </div>
 
           <h1 className="text-4xl font-bold tracking-tight text-slate-900">
@@ -86,17 +86,23 @@ export default async function HomePage() {
             >
               Per diem policies
             </Link>
+            <Link
+              href="/travel-requests"
+              className="rounded-lg border border-slate-200 px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              Travel requests
+            </Link>
           </div>
 
           <div className="mt-8 rounded-lg border border-dashed border-slate-200 bg-slate-50 p-6">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-              Phase 3 Complete
+              Phase 4 Complete
             </h2>
             <ul className="mt-3 space-y-2 text-sm text-slate-600">
-              <li>✓ Per diem policy CRUD (country, role, rate, priority)</li>
-              <li>✓ Calculation engine with role-specific rule matching</li>
-              <li>✓ RBAC permissions for policy management</li>
-              <li>✓ Policies page with per diem calculator</li>
+              <li>✓ Travel request creation with auto per diem calculation</li>
+              <li>✓ Status workflow: draft → submitted → cancelled</li>
+              <li>✓ Tenant-scoped access (employees see own, managers see all)</li>
+              <li>✓ Travel requests page with submit/cancel actions</li>
             </ul>
           </div>
         </div>

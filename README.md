@@ -91,6 +91,26 @@ pnpm --filter @perdiem/backend test:e2e
 - [x] Next.js frontend with API client
 - [x] Unit & integration tests
 
+## Phase 4 — Travel Request (Complete)
+
+- [x] Travel request model with per diem calculation snapshot
+- [x] Auto per diem calculation via policy engine on create/update
+- [x] Status management: draft, submitted, cancelled
+- [x] RBAC with tenant-scoped access (employees own, managers/admins all)
+- [x] Frontend travel requests page
+- [x] Unit and E2E tests
+
+### Travel Request API
+
+| Method | Endpoint | Permission | Description |
+|--------|----------|------------|-------------|
+| POST | `/api/v1/travel-requests` | `travel_requests:write` | Create draft with auto calculation |
+| GET | `/api/v1/travel-requests` | `travel_requests:read` | List requests (scoped by role) |
+| GET | `/api/v1/travel-requests/:id` | `travel_requests:read` | Get request by ID |
+| PATCH | `/api/v1/travel-requests/:id` | `travel_requests:write` | Update draft (recalculates per diem) |
+| POST | `/api/v1/travel-requests/:id/submit` | `travel_requests:submit` | Submit draft for approval |
+| POST | `/api/v1/travel-requests/:id/cancel` | `travel_requests:cancel` | Cancel draft or submitted request |
+
 ## Phase 3 — Policy Engine (Complete)
 
 - [x] Per diem policy model (country, role, rate, currency, priority)
@@ -162,7 +182,7 @@ pnpm --filter @perdiem/backend test:e2e
 | 1 | Auth + Tenant | ✅ Complete |
 | 2 | User Management + RBAC | ✅ Complete |
 | 3 | Policy Engine | ✅ Complete |
-| 4 | Travel Request | Pending |
+| 4 | Travel Request | ✅ Complete |
 | 5 | Approval Workflow | Pending |
 | 6 | Finance | Pending |
 | 7 | Notifications | Pending |

@@ -18,6 +18,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { HealthModule } from './modules/health/health.module';
 import { PoliciesModule } from './modules/policies/policies.module';
 import { TenantModule } from './modules/tenant/tenant.module';
+import { TravelRequestsModule } from './modules/travel-requests/travel-requests.module';
 import { UserModule } from './modules/users/user.module';
 
 @Module({
@@ -34,6 +35,7 @@ import { UserModule } from './modules/users/user.module';
     UserModule,
     AuthModule,
     PoliciesModule,
+    TravelRequestsModule,
     HealthModule,
   ],
   providers: [
