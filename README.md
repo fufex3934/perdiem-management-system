@@ -91,12 +91,32 @@ pnpm --filter @perdiem/backend test:e2e
 - [x] Next.js frontend with API client
 - [x] Unit & integration tests
 
+## Phase 1 — Auth + Tenant (Complete)
+
+- [x] MongoDB/Mongoose integration
+- [x] Tenant and User models with `tenantId` isolation
+- [x] JWT access + refresh tokens (bcrypt passwords)
+- [x] Global `JwtAuthGuard` + `TenantGuard`
+- [x] Auth endpoints: register-tenant, login, refresh, logout, me
+- [x] Frontend login, register, and dashboard pages
+- [x] Unit and E2E tests
+
+### Auth API Endpoints
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| POST | `/api/v1/auth/register-tenant` | Public | Create tenant + admin user |
+| POST | `/api/v1/auth/login` | Public | Login with tenant slug |
+| POST | `/api/v1/auth/refresh` | Public | Rotate refresh token |
+| POST | `/api/v1/auth/logout` | Required | Revoke refresh tokens |
+| GET | `/api/v1/auth/me` | Required | Current user profile |
+
 ## Development Phases
 
 | Phase | Feature | Status |
 |-------|---------|--------|
 | 0 | Foundation | ✅ Complete |
-| 1 | Auth + Tenant | Pending |
+| 1 | Auth + Tenant | ✅ Complete |
 | 2 | User Management + RBAC | Pending |
 | 3 | Policy Engine | Pending |
 | 4 | Travel Request | Pending |

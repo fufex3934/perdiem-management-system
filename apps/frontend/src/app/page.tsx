@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { apiClient } from '@/lib/api-client';
 import { env } from '@/lib/env';
 
@@ -23,7 +24,7 @@ export default async function HomePage() {
       <div className="mx-auto flex min-h-screen max-w-5xl flex-col items-center justify-center px-6 py-16">
         <div className="w-full max-w-2xl rounded-2xl border bg-white p-10 shadow-sm">
           <div className="mb-6 inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700">
-            Phase 0 — Foundation
+            Phase 1 — Auth + Tenant
           </div>
 
           <h1 className="text-4xl font-bold tracking-tight text-slate-900">
@@ -54,15 +55,36 @@ export default async function HomePage() {
             />
           </div>
 
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link
+              href="/login"
+              className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700"
+            >
+              Sign in
+            </Link>
+            <Link
+              href="/register"
+              className="rounded-lg border border-slate-200 px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              Register organization
+            </Link>
+            <Link
+              href="/dashboard"
+              className="rounded-lg border border-slate-200 px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              Dashboard
+            </Link>
+          </div>
+
           <div className="mt-8 rounded-lg border border-dashed border-slate-200 bg-slate-50 p-6">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-              Foundation Complete
+              Phase 1 Complete
             </h2>
             <ul className="mt-3 space-y-2 text-sm text-slate-600">
-              <li>✓ Monorepo with pnpm workspaces</li>
-              <li>✓ NestJS config validation &amp; structured logging</li>
-              <li>✓ Global exception handling &amp; request tracing</li>
-              <li>✓ Next.js App Router with API client</li>
+              <li>✓ Tenant + User models with MongoDB</li>
+              <li>✓ JWT access + refresh token auth</li>
+              <li>✓ Tenant isolation guards</li>
+              <li>✓ Login, register, and dashboard UI</li>
             </ul>
           </div>
         </div>

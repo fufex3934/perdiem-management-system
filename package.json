@@ -16,6 +16,9 @@
     "start:api": "pnpm --filter @perdiem/backend start:prod",
     "start:web": "pnpm --filter @perdiem/frontend start"
   },
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  },
   "engines": {
     "node": ">=20.0.0",
     "pnpm": ">=9.0.0"
