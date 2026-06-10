@@ -1,0 +1,26 @@
+{
+  "name": "perdiem-management-system",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Enterprise multi-tenant Per Diem Management SaaS",
+  "scripts": {
+    "dev": "pnpm --parallel -r run dev",
+    "dev:api": "pnpm --filter @perdiem/backend dev",
+    "dev:web": "pnpm --filter @perdiem/frontend dev",
+    "build": "pnpm -r run build",
+    "build:api": "pnpm --filter @perdiem/backend build",
+    "build:web": "pnpm --filter @perdiem/frontend build",
+    "test": "pnpm -r run test",
+    "test:api": "pnpm --filter @perdiem/backend test",
+    "lint": "pnpm -r run lint",
+    "start:api": "pnpm --filter @perdiem/backend start:prod",
+    "start:web": "pnpm --filter @perdiem/frontend start"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "keywords": ["per-diem", "saas", "multi-tenant", "enterprise"],
+  "author": "",
+  "license": "UNLICENSED"
+}
